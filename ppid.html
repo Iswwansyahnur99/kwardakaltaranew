@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PPID — Pramuka Kaltara</title>
+  <meta name="description" content="Portal resmi Kwarda Kalimantan Utara: catatan lapangan, galeri, agenda, download formulir, dan layanan PPID transparan." />
+  <meta property="og:title" content="PPID — Pramuka Kaltara" />
+  <meta property="og:description" content="Portal resmi Kwarda Kalimantan Utara: catatan lapangan, galeri, agenda, download formulir, dan layanan PPID transparan." />
+  <meta property="og:type" content="website" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+<a class="skip" href="#main">Lewati ke konten utama</a>
+<header role="banner">
+  <div class="container nav" aria-label="Navigasi utama">
+    <div class="brand">
+      <div class="brand__logo" aria-hidden="true"></div>
+      <div class="brand__name">Pramuka Kaltara</div>
+    </div>
+    <nav class="menu" aria-label="Menu">
+      <a href="index.html" data-nav="beranda">Beranda</a>
+      <a href="catatan.html" data-nav="catatan">Catatan Lapangan</a>
+      <a href="galeri.html" data-nav="galeri">Galeri</a>
+      <a href="agenda.html" data-nav="agenda">Agenda</a>
+      <a href="download.html" data-nav="download">Download</a>
+      <a href="ppid.html" data-nav="ppid">PPID</a>
+      <a href="tentang.html" data-nav="tentang">Tentang</a>
+      <a href="kontak.html" data-nav="kontak">Kontak</a>
+      <div class="cta">
+        <a class="btn btn--ghost" href="ppid.html">PPID</a>
+        <a class="btn btn--gold" href="kontak.html">Gabung Pramuka</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="breadcrumbs"><a href="index.html">Beranda</a> / PPID</div>
+    <h1 class="hero__title" style="font-size:34px">PPID — Layanan Informasi Terbuka</h1>
+    <p class="hero__subtitle">“Buku catatan terbuka” Kwarda Kaltara. Telusuri informasi berkala, setiap saat, dan serta merta.</p>
+  </div>
+</div>
+<main id="main">
+  <section>
+    <div class="container">
+      <div class="filters" aria-label="Filter dokumen PPID">
+        <input id="search-ppid" type="search" placeholder="Cari judul / nomor / kata kunci…" aria-label="Cari dokumen PPID" />
+        <select id="type-ppid" aria-label="Filter jenis informasi">
+          <option value="">Semua jenis</option>
+          <option value="berkala">Berkala</option>
+          <option value="setiap_saat">Setiap Saat</option>
+          <option value="serta_merta">Serta Merta</option>
+        </select>
+        <select id="year-ppid" aria-label="Filter tahun">
+          <option value="">Semua tahun</option>
+        </select>
+        <a class="btn btn--solid" href="#">Ajukan Permohonan</a>
+      </div>
+      <div style="overflow:auto;border-radius:14px">
+        <table aria-describedby="ppid-title">
+          <thead>
+            <tr>
+              <th>Judul</th>
+              <th>Nomor/Tahun</th>
+              <th>Jenis</th>
+              <th>Unit</th>
+              <th>Terbit</th>
+              <th>Unduh</th>
+            </tr>
+          </thead>
+          <tbody id="ppid-docs"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+<script>document.body.setAttribute('data-page','ppid');</script>
+
+<footer role="contentinfo">
+  <div class="container footer__grid">
+    <div>
+      <div class="footer__brand">Pramuka Kaltara</div>
+      <p>Menjaga Beranda, Menyalakan Masa Depan — Tangguh, Berbudaya, Menyatu dengan Alam.</p>
+    </div>
+    <div>
+      <strong>Tautan</strong>
+      <ul style="list-style:none;padding:0;margin:8px 0 0">
+        <li><a href="ppid.html" style="color:#e9f2f9">PPID</a></li>
+        <li><a href="download.html" style="color:#e9f2f9">Download</a></li>
+        <li><a href="agenda.html" style="color:#e9f2f9">Agenda</a></li>
+      </ul>
+    </div>
+    <div>
+      <strong>Kontak</strong>
+      <p style="margin:8px 0 0">info@kwardakaltara.or.id</p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="copyright">© <span id="year">2025</span> Kwartir Daerah Gerakan Pramuka Kalimantan Utara.</div>
+  </div>
+</footer>
+<script src="assets/data.js"></script>
+<script src="assets/script.js"></script>
+</body>
+</html>

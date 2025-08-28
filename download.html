@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Download — Pramuka Kaltara</title>
+  <meta name="description" content="Portal resmi Kwarda Kalimantan Utara: catatan lapangan, galeri, agenda, download formulir, dan layanan PPID transparan." />
+  <meta property="og:title" content="Download — Pramuka Kaltara" />
+  <meta property="og:description" content="Portal resmi Kwarda Kalimantan Utara: catatan lapangan, galeri, agenda, download formulir, dan layanan PPID transparan." />
+  <meta property="og:type" content="website" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+<a class="skip" href="#main">Lewati ke konten utama</a>
+<header role="banner">
+  <div class="container nav" aria-label="Navigasi utama">
+    <div class="brand">
+      <div class="brand__logo" aria-hidden="true"></div>
+      <div class="brand__name">Pramuka Kaltara</div>
+    </div>
+    <nav class="menu" aria-label="Menu">
+      <a href="index.html" data-nav="beranda">Beranda</a>
+      <a href="catatan.html" data-nav="catatan">Catatan Lapangan</a>
+      <a href="galeri.html" data-nav="galeri">Galeri</a>
+      <a href="agenda.html" data-nav="agenda">Agenda</a>
+      <a href="download.html" data-nav="download">Download</a>
+      <a href="ppid.html" data-nav="ppid">PPID</a>
+      <a href="tentang.html" data-nav="tentang">Tentang</a>
+      <a href="kontak.html" data-nav="kontak">Kontak</a>
+      <div class="cta">
+        <a class="btn btn--ghost" href="ppid.html">PPID</a>
+        <a class="btn btn--gold" href="kontak.html">Gabung Pramuka</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="breadcrumbs"><a href="index.html">Beranda</a> / Download</div>
+    <h1 class="hero__title" style="font-size:34px">Download Dokumen</h1>
+    <p class="hero__subtitle">Formulir, SOP, pedoman, dan template.</p>
+  </div>
+</div>
+<main id="main">
+  <section>
+    <div class="container">
+      <div class="grid cols-3" style="margin-bottom:14px">
+        <a class="card" href="#" aria-label="Form Pendaftaran Anggota">
+          <div class="card__media" role="img" aria-label="Form Pendaftaran"></div>
+          <div class="card__body">
+            <div class="card__title">Form Pendaftaran Anggota</div>
+            <div class="meta">PDF • 210 KB</div>
+          </div>
+        </a>
+        <a class="card" href="#" aria-label="SOP Kegiatan Lapangan">
+          <div class="card__media" role="img" aria-label="SOP Kegiatan"></div>
+          <div class="card__body">
+            <div class="card__title">SOP Kegiatan Lapangan</div>
+            <div class="meta">PDF • 390 KB</div>
+          </div>
+        </a>
+        <a class="card" href="#" aria-label="Template Surat Rekomendasi">
+          <div class="card__media" role="img" aria-label="Template Surat"></div>
+          <div class="card__body">
+            <div class="card__title">Template Surat Rekomendasi</div>
+            <div class="meta">DOCX • 48 KB</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="filters" aria-label="Filter tabel download">
+        <input id="search-downloads" type="search" placeholder="Cari judul atau kategori…" aria-label="Cari dokumen" />
+        <select id="category-downloads" aria-label="Filter kategori">
+          <option value="">Semua kategori</option>
+          <option>Pendaftaran</option>
+          <option>SOP</option>
+          <option>Pedoman</option>
+          <option>Surat</option>
+          <option>Template</option>
+        </select>
+      </div>
+
+      <div style="overflow:auto;border-radius:14px">
+        <table aria-describedby="download-title">
+          <thead>
+            <tr>
+              <th>Judul</th>
+              <th>Kategori</th>
+              <th>Deskripsi</th>
+              <th>File</th>
+              <th>Diperbarui</th>
+            </tr>
+          </thead>
+          <tbody id="downloads"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+<script>document.body.setAttribute('data-page','download');</script>
+
+<footer role="contentinfo">
+  <div class="container footer__grid">
+    <div>
+      <div class="footer__brand">Pramuka Kaltara</div>
+      <p>Menjaga Beranda, Menyalakan Masa Depan — Tangguh, Berbudaya, Menyatu dengan Alam.</p>
+    </div>
+    <div>
+      <strong>Tautan</strong>
+      <ul style="list-style:none;padding:0;margin:8px 0 0">
+        <li><a href="ppid.html" style="color:#e9f2f9">PPID</a></li>
+        <li><a href="download.html" style="color:#e9f2f9">Download</a></li>
+        <li><a href="agenda.html" style="color:#e9f2f9">Agenda</a></li>
+      </ul>
+    </div>
+    <div>
+      <strong>Kontak</strong>
+      <p style="margin:8px 0 0">info@kwardakaltara.or.id</p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="copyright">© <span id="year">2025</span> Kwartir Daerah Gerakan Pramuka Kalimantan Utara.</div>
+  </div>
+</footer>
+<script src="assets/data.js"></script>
+<script src="assets/script.js"></script>
+</body>
+</html>
