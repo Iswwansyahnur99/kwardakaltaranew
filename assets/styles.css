@@ -157,7 +157,7 @@ li{ text-align:justify; text-justify:inter-word; hyphens:auto }
   .hero-nova__inner{grid-template-columns:1fr;grid-template-areas:'media' 'content';padding:88px 0 40px}
   .nova-title{font-size:clamp(32px,8vw,40px)}
   /* Izinkan foto sedikit melewati bagian atas, bawah tetap pas */
-  .nova-card{min-height:420px;overflow:visible}
+  .nova-card{min-height:420px;overflow:visible;margin-top:16px}
   /* Posisikan foto pas di bawah box dan tidak tertutup bagian atas */
   .bunda-hero{left:50%;right:auto;bottom:0;transform:translateX(-50%);height:120%;object-position:bottom center}
   .nova-badge{left:12px;bottom:12px;top:auto;font-size:14px;padding:8px 12px;border-radius:12px;max-width:calc(100% - 24px - 24px);background:rgba(255,255,255,.96);z-index:3}
