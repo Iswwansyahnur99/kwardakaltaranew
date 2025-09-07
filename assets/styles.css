@@ -153,11 +153,13 @@ li{ text-align:justify; text-justify:inter-word; hyphens:auto }
 
 @media (max-width:980px){
   .hero--nova .container{padding:0 16px}
-  .hero-nova__inner{grid-template-columns:1fr;grid-template-areas:'media' 'content';padding:28px 0 40px}
+  /* Beri jarak cukup besar dari header */
+  .hero-nova__inner{grid-template-columns:1fr;grid-template-areas:'media' 'content';padding:56px 0 40px}
   .nova-title{font-size:clamp(32px,8vw,40px)}
-  .nova-card{min-height:360px;overflow:hidden}
+  /* Izinkan foto sedikit melewati bagian atas, bawah tetap pas */
+  .nova-card{min-height:380px;overflow:visible}
   /* Posisikan foto pas di bawah box dan tidak tertutup bagian atas */
-  .bunda-hero{left:50%;right:auto;bottom:0;transform:translateX(-50%);height:110%;object-position:bottom center}
+  .bunda-hero{left:50%;right:auto;bottom:0;transform:translateX(-50%);height:118%;object-position:bottom center}
   .nova-badge{left:12px;bottom:12px;top:auto;font-size:14px;padding:8px 12px;border-radius:12px;max-width:calc(100% - 24px - 24px);background:rgba(255,255,255,.96);z-index:3}
   .nova-card{padding-bottom:28px}
   .hero-nova__content{text-align:left}
