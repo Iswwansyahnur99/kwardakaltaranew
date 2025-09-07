@@ -23,6 +23,7 @@
     <button class="nav__toggle" aria-label="Buka menu" aria-expanded="false" aria-controls="site-menu">☰</button>
     <nav id="site-menu" class="menu" aria-label="Menu">
       <a href="index.html" data-nav="home" class="menu__link">Home</a>
+      <a href="berita.html" data-nav="berita" class="menu__link">Berita</a>
       <div class="menu__item has-sub">
         <a href="profil.html" data-nav="profil" class="menu__link">Profil <span class="chev"></span></a>
         <div class="submenu">
@@ -41,15 +42,15 @@
 <div id="beranda" class="hero hero--nova" role="region" aria-label="Beranda">
   <div class="container hero-nova__inner">
     <div class="hero-nova__content">
-      <h1 class="nova-title">Sambutan Kwarda Kaltara</h1>
-      <div class="nameplate">Kak Rahmawati, S.H.</div>
+      <h1 class="nova-title">Sambutan Ketua Kwarda Kaltara</h1>
+      <div class="nameplate">Kak Hj. Rahmawati, S.H.</div>
       <p class="nova-subtitle">Salam Pramuka!<br><br>
       Adik-adik dan Kakak-kakak, anggaplah situs ini kompas digital dan pesan semapur kita. Sebuah panggilan untuk merapatkan barisan, menunjukkan bahwa semangat tunas kelapa tak hanya tumbuh subur di alam terbuka, tapi juga berkobar di dunia maya. Ini adalah markas besar kita, tempat di mana kacu merah putih di leher kita dan semangat Trisatya di dalam dada bersinar paling terang untuk Kalimantan Utara.</p>    
     </div>
     <div class="hero-nova__media" aria-label="Cuplikan kegiatan Pramuka Kaltara">
       <div class="nova-card">
         <div class="nova-shine" aria-hidden="true"></div>
-        <div class="nova-badge">Ketua Kwarda Kaltara</div>
+        <div class="nova-badge">Ketua Kwarda Kalimantan Utara</div>
         <img class="nova-crest" src="assets/logo-kaltara.png" alt="Lambang Kalimantan Utara">
         <img class="bunda-hero" src="assets/bunda_hero.png" alt="Ketua Kwarda Kalimantan Utara">
       </div>
@@ -59,42 +60,26 @@
 </div>
 
 <main id="main">
-  <section aria-labelledby="sapaan">
-    <div class="container">
-      <div class="bunda">
-        <div class="bunda__photo" role="img" aria-label="Foto Ketua Kwarda ('Bunda')"></div>
-        <div>
-          <h2 id="sapaan">Sapaan Bunda</h2>
-          <p class="lead">Assalamualaikum warahmatullahi wabarakatuh. Selamat datang di rumah kita—api unggun digital Pramuka Kaltara. Di sini kita belajar dari alam, merawat budaya, dan melayani dengan hati. Mari bergandeng tangan menyiapkan generasi tangguh, berakhlak, dan cinta tanah air.</p>
-          <div class="bunda__name">Ketua Kwarda Kalimantan Utara</div>
-        </div>
-      </div>
-    </div>
-  </section>
+  
 
-  <section aria-labelledby="catatan-title">
+  <section aria-labelledby="berita-title">
     <div class="container">
-      <h2 id="catatan-title">Catatan Lapangan</h2>
-      <p class="lead">Kumpulan kisah pengabdian, petualangan, dan pembelajaran dari Kaltara. Bukan laporan—tetapi cerita.</p>
+      <h2 id="berita-title">Berita Lapangan</h2>
+      <p class="lead">Tiga berita terbaru seputar kegiatan Pramuka Kaltara.</p>
       <div id="posts" class="grid cols-3" data-limit="3"></div>
-      <div class="mt-12"><a class="btn" href="catatan.html">Lihat semua kisah →</a></div>
+      <div class="mt-12"><a class="btn" href="berita.html">Lihat semua berita →</a></div>
     </div>
   </section>
 
-  <section aria-labelledby="galeri-title">
-    <div class="container">
-      <h2 id="galeri-title">Album Kenangan</h2>
-      <p class="lead">Foto & video dari tawa, kerja keras, persahabatan, dan kebanggaan.</p>
-      <div id="albums" class="grid cols-3" data-limit="3"></div>
-      <div class="mt-12"><a class="btn" href="galeri.html">Lihat semua album →</a></div>
-    </div>
-  </section>
+  
 
   <section aria-labelledby="agenda-title">
     <div class="container">
       <h2 id="agenda-title">Agenda Terdekat</h2>
-      <p class="lead">Jadwal kegiatan yang bisa Anda ikuti. Klik detail untuk informasi lengkap.</p>
-      <div id="events" class="grid cols-2" data-limit="2"></div>
+      <p class="lead">Jadwal kegiatan. Tiga terdekat di atas, tiga yang sudah berlalu di bawah.</p>
+      <div id="events-upcoming" class="grid cols-2" data-limit="3" data-type="upcoming"></div>
+      <h3 class="agenda__subheading" style="margin:16px 0 8px;color:var(--gray)">Yang sudah berlalu</h3>
+      <div id="events-past" class="grid cols-2" data-limit="3" data-type="past"></div>
     </div>
   </section>
 </main>

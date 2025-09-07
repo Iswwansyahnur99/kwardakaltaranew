@@ -27,6 +27,7 @@
       menu.setAttribute('aria-label','Menu');
       menu.innerHTML = `
         <a href="index.html" data-nav="home" class="menu__link">Home</a>
+        <a href="berita.html" data-nav="berita" class="menu__link">Berita</a>
         <div class="menu__item has-sub">
           <a href="profil.html" data-nav="profil" class="menu__link">Profil <span class="chev"></span></a>
           <div class="submenu">
@@ -127,6 +128,8 @@
     const tag = (tagSel?.value || '');
     listEl.innerHTML='';
     let coll = DATA.posts
+      .slice()
+      .sort((a,b)=> new Date(b.date) - new Date(a.date))
       .filter(p => (!q || (p.title+" "+p.excerpt+" "+p.location).toLowerCase().includes(q)) && (!tag || p.tags.includes(tag)));
     const limit = Number(listEl?.dataset?.limit || 0);
     if (limit > 0) coll = coll.slice(0, limit);
@@ -144,7 +147,7 @@
             <div class="meta">${p.location} • ${new Date(p.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
             <p>${p.excerpt}</p>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-            <div style="margin-top:10px"><a class="btn" href="#">Baca kisah</a></div>
+            <div style="margin-top:10px"><a class="btn" href="berita-detail.html?slug=${encodeURIComponent(p.slug)}">Baca berita</a></div>
           </div>`;
         listEl.appendChild(el);
       });
@@ -177,13 +180,19 @@
   function renderEvents(listEl){
     if (!listEl) return;
     listEl.innerHTML='';
+    const now = new Date();
+    const type = (listEl?.dataset?.type || 'all');
     let coll = DATA.events.slice();
+    // Sort asc by date by default
+    coll.sort((a,b)=> new Date(a.date) - new Date(b.date));
+    if (type === 'upcoming') coll = coll.filter(ev => new Date(ev.date) >= now);
+    if (type === 'past') coll = coll.filter(ev => new Date(ev.date) < now).sort((a,b)=> new Date(b.date) - new Date(a.date));
     const limit = Number(listEl?.dataset?.limit || 0);
     if (limit > 0) coll = coll.slice(0, limit);
     coll.forEach(ev=>{
       const d = new Date(ev.date);
       const el = document.createElement('div');
-      el.className = 'agenda__item';
+      el.className = 'agenda__item' + (type==='past' ? ' agenda__item--past' : '');
       el.innerHTML = `
         <div class="agenda__date" aria-label="Tanggal kegiatan">
           <div class="d">${d.getDate().toString().padStart(2,'0')}</div>
@@ -267,11 +276,11 @@
     if (page === 'beranda' || page === 'home') {
       // Render limited lists on home
       renderPosts(document.getElementById('posts'));
-      renderAlbums(document.getElementById('albums'));
-      renderEvents(document.getElementById('events'));
+      renderEvents(document.getElementById('events-upcoming'));
+      renderEvents(document.getElementById('events-past'));
     }
 
-    if (page === 'catatan') {
+    if (page === 'catatan' || page === 'berita') {
       renderPosts(document.getElementById('posts'), document.getElementById('search-posts'), document.getElementById('tag-filter'));
       document.getElementById('search-posts').addEventListener('input', ()=>renderPosts(document.getElementById('posts'), document.getElementById('search-posts'), document.getElementById('tag-filter')));
     }
@@ -282,6 +291,34 @@
 
     if (page === 'agenda') {
       renderEvents(document.getElementById('events'));
+    }
+
+    if (page === 'berita-detail') {
+      const params = new URLSearchParams(location.search);
+      const slug = params.get('slug');
+      const post = DATA.posts.find(p=>p.slug===slug);
+      const wrap = document.getElementById('post-detail');
+      const crumb = document.getElementById('crumb-title');
+      const h = document.getElementById('page-title');
+      const sub = document.getElementById('page-sub');
+      if (!post){
+        if (wrap) wrap.innerHTML = '<p>Berita tidak ditemukan.</p>';
+        return;
+      }
+      if (h) h.textContent = post.title;
+      if (crumb) crumb.textContent = post.title;
+      if (sub) sub.textContent = `${post.location} • ${new Date(post.date).toLocaleDateString('id-ID')}`;
+      const bodyHtml = Array.isArray(post.content)
+        ? post.content.map(p=>`<p>${p}</p>`).join('')
+        : (post.content ? post.content.split(/\n\n+/).map(p=>`<p>${p}</p>`).join('') : `<p>${post.excerpt}</p>`);
+      if (wrap) wrap.innerHTML = `
+        <header>
+          <div class="meta">${post.location} • ${new Date(post.date).toLocaleDateString('id-ID')}</div>
+          <h2 style="margin:6px 0 12px">${post.title}</h2>
+        </header>
+        ${bodyHtml}
+        <div class="chips" style="margin-top:12px">${post.tags.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+      `;
     }
 
     if (page === 'download') {
