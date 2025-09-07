@@ -159,7 +159,8 @@ li{ text-align:justify; text-justify:inter-word; hyphens:auto }
   /* Izinkan foto sedikit melewati bagian atas, bawah tetap pas */
   .nova-card{min-height:420px;overflow:visible;margin-top:16px}
   /* Posisikan foto pas di bawah box dan tidak tertutup bagian atas */
-  .bunda-hero{left:50%;right:auto;bottom:0;transform:translateX(-50%);height:120%;object-position:bottom center}
+  /* Perkecil skala foto di mobile agar tidak terlalu besar */
+  .bunda-hero{left:50%;right:auto;bottom:0;transform:translateX(-50%);height:112%;object-position:bottom center}
   .nova-badge{left:12px;bottom:12px;top:auto;font-size:14px;padding:8px 12px;border-radius:12px;max-width:calc(100% - 24px - 24px);background:rgba(255,255,255,.96);z-index:3}
   .nova-card{padding-bottom:28px}
   .hero-nova__content{text-align:left}
