@@ -20,40 +20,55 @@
       <div class="brand__logo" aria-hidden="true"></div>
       <div class="brand__name">Pramuka Kaltara</div>
     </div>
-    <nav class="menu" aria-label="Menu">
-      <a href="index.html" data-nav="beranda">Beranda</a>
-      <a href="catatan.html" data-nav="catatan">Catatan Lapangan</a>
-      <a href="galeri.html" data-nav="galeri">Galeri</a>
-      <a href="agenda.html" data-nav="agenda">Agenda</a>
-      <a href="download.html" data-nav="download">Download</a>
-      <a href="ppid.html" data-nav="ppid">PPID</a>
-      <a href="tentang.html" data-nav="tentang">Tentang</a>
-      <a href="kontak.html" data-nav="kontak">Kontak</a>
-      <div class="cta">
-        <a class="btn btn--ghost" href="ppid.html">PPID</a>
-        <a class="btn btn--gold" href="kontak.html">Gabung Pramuka</a>
+    <button class="nav__toggle" aria-label="Buka menu" aria-expanded="false" aria-controls="site-menu">☰</button>
+    <nav id="site-menu" class="menu" aria-label="Menu">
+      <a href="index.html" data-nav="home" class="menu__link">Home</a>
+      <div class="menu__item has-sub">
+        <a href="profil.html" data-nav="profil" class="menu__link">Profil <span class="chev"></span></a>
+        <div class="submenu">
+          <a href="tentang.html">Tentang Kwarda</a>
+          <a href="organisasi.html">Organisasi</a>
+          <a href="kontak.html">Kontak</a>
+        </div>
       </div>
+      <a href="agenda.html" data-nav="agenda" class="menu__link">Agenda</a>
+      <a href="ppid.html" data-nav="ppid" class="menu__link">PPID</a>
+      <a href="kirim-berita.html" data-nav="kirim-berita" class="menu__link menu__cta--red">Kirim Berita</a>
     </nav>
   </div>
 </header>
 
-<div id="beranda" class="hero" role="region" aria-label="Beranda">
-  <div class="container hero__inner">
-    <div>
-      <h1 class="hero__title">Api Unggun Digital dari <span style="color:var(--blue-dark)">Jantung Borneo</span></h1>
-      <p class="hero__subtitle">Bukan sekadar informasi: ini jendela kisah bagaimana tunas bangsa di Kalimantan Utara tumbuh tangguh, berkarakter, dan cinta tanah air.</p>
-      <div class="hero__actions">
+<div id="beranda" class="hero hero--nova" role="region" aria-label="Beranda">
+  <div class="container hero-nova__inner">
+    <div class="hero-nova__content">
+      <div class="seal" aria-hidden="true">
+        <img src="assets/logo-kaltara.png" alt="" class="seal__img"/>
+        <span class="seal__ring"></span>
+      </div>
+      <h1 class="nova-title">Sambutan Kwarda Kaltara</h1>
+      <div class="nameplate">Kak Rahmawati, S.H.</div>
+      <p class="nova-subtitle">Assalamualaikum warahmatullahi wabarakatuh. Selamat datang di ruang digital Pramuka Kaltara. Mari bergerak bersama menyalakan api semangat, merawat budaya, dan melayani dengan hati.</p>
+      <div class="chips" aria-label="Nilai">
+        <span class="chip">Tangguh</span>
+        <span class="chip">Berbudaya</span>
+        <span class="chip">Menyatu dengan Alam</span>
+      </div>
+      <div class="cta-row">
         <a class="btn btn--solid" href="catatan.html">Lihat Catatan Lapangan</a>
         <a class="btn" href="galeri.html">Album Kenangan</a>
         <a class="btn btn--gold" href="ppid.html">PPID Terbuka</a>
       </div>
     </div>
-    <div class="hero__media" aria-label="Cuplikan kegiatan Pramuka Kaltara">
-      <div aria-hidden="true" style="backdrop-filter:contrast(.9) saturate(1.1);"></div>
-      <div class="hero__badge">Kegiatan • Kaltara • Perbatasan</div>
+    <div class="hero-nova__media" aria-label="Cuplikan kegiatan Pramuka Kaltara">
+      <div class="nova-card">
+        <div class="nova-shine" aria-hidden="true"></div>
+        <div class="nova-badge">Ketua Kwarda Kaltara</div>
+        <img class="nova-crest" src="assets/logo-kaltara.png" alt="Lambang Kalimantan Utara">
+        <img class="bunda-hero" src="assets/bunda_hero.png" alt="Ketua Kwarda Kalimantan Utara">
+      </div>
     </div>
   </div>
-  <div class="ornament" aria-hidden="true"></div>
+  <div class="scarf-strip" aria-hidden="true"></div>
 </div>
 
 <main id="main">
@@ -74,8 +89,8 @@
     <div class="container">
       <h2 id="catatan-title">Catatan Lapangan</h2>
       <p class="lead">Kumpulan kisah pengabdian, petualangan, dan pembelajaran dari Kaltara. Bukan laporan—tetapi cerita.</p>
-      <div id="posts" class="grid cols-3"></div>
-      <div style="margin-top:12px"><a class="btn" href="catatan.html">Lihat semua kisah →</a></div>
+      <div id="posts" class="grid cols-3" data-limit="3"></div>
+      <div class="mt-12"><a class="btn" href="catatan.html">Lihat semua kisah →</a></div>
     </div>
   </section>
 
@@ -83,8 +98,8 @@
     <div class="container">
       <h2 id="galeri-title">Album Kenangan</h2>
       <p class="lead">Foto & video dari tawa, kerja keras, persahabatan, dan kebanggaan.</p>
-      <div id="albums" class="grid cols-3"></div>
-      <div style="margin-top:12px"><a class="btn" href="galeri.html">Lihat semua album →</a></div>
+      <div id="albums" class="grid cols-3" data-limit="3"></div>
+      <div class="mt-12"><a class="btn" href="galeri.html">Lihat semua album →</a></div>
     </div>
   </section>
 
@@ -92,11 +107,11 @@
     <div class="container">
       <h2 id="agenda-title">Agenda Terdekat</h2>
       <p class="lead">Jadwal kegiatan yang bisa Anda ikuti. Klik detail untuk informasi lengkap.</p>
-      <div id="events" class="grid cols-2"></div>
+      <div id="events" class="grid cols-2" data-limit="2"></div>
     </div>
   </section>
 </main>
-<script>document.body.setAttribute('data-page','beranda');</script>
+<script>document.body.setAttribute('data-page','home');</script>
 
 <footer role="contentinfo">
   <div class="container footer__grid">
@@ -106,15 +121,15 @@
     </div>
     <div>
       <strong>Tautan</strong>
-      <ul style="list-style:none;padding:0;margin:8px 0 0">
-        <li><a href="ppid.html" style="color:#e9f2f9">PPID</a></li>
-        <li><a href="download.html" style="color:#e9f2f9">Download</a></li>
-        <li><a href="agenda.html" style="color:#e9f2f9">Agenda</a></li>
+      <ul class="list-unstyled mt-8">
+        <li><a href="ppid.html">PPID</a></li>
+        <li><a href="download.html">Download</a></li>
+        <li><a href="agenda.html">Agenda</a></li>
       </ul>
     </div>
     <div>
       <strong>Kontak</strong>
-      <p style="margin:8px 0 0">info@kwardakaltara.or.id</p>
+      <p class="mt-8">info@kwardakaltara.or.id</p>
     </div>
   </div>
   <div class="container">

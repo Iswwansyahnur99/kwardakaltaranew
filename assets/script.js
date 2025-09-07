@@ -1,17 +1,122 @@
 
 (function(){
-  // Set active nav based on body data-page
-  const current = document.body.getAttribute('data-page');
-  if (current) {
-    const link = document.querySelector(`a[data-nav="${current}"]`);
-    if (link) link.setAttribute('aria-current','page');
-  }
+  // Current page id for active state
+  let current = document.body.getAttribute('data-page');
   // Year
   const y = document.getElementById('year'); if (y) y.textContent = new Date().getFullYear();
 
   // Utilities
   const $ = (sel,root=document)=>root.querySelector(sel);
   const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+
+  // Build/ensure new menu structure if missing (for legacy pages)
+  function ensureMenu(){
+    const navWrap = $('.nav');
+    if (!navWrap) return;
+    if (!$('#site-menu')){
+      const toggle = document.createElement('button');
+      toggle.className = 'nav__toggle';
+      toggle.setAttribute('aria-label','Buka menu');
+      toggle.setAttribute('aria-expanded','false');
+      toggle.setAttribute('aria-controls','site-menu');
+      toggle.textContent = '☰';
+
+      const menu = document.createElement('nav');
+      menu.id = 'site-menu';
+      menu.className = 'menu';
+      menu.setAttribute('aria-label','Menu');
+      menu.innerHTML = `
+        <a href="index.html" data-nav="home" class="menu__link">Home</a>
+        <div class="menu__item has-sub">
+          <a href="profil.html" data-nav="profil" class="menu__link">Profil <span class="chev"></span></a>
+          <div class="submenu">
+            <a href="tentang.html">Tentang Kwarda</a>
+            <a href="organisasi.html">Organisasi</a>
+            <a href="kontak.html">Kontak</a>
+          </div>
+        </div>
+        <a href="agenda.html" data-nav="agenda" class="menu__link">Agenda</a>
+        <a href="ppid.html" data-nav="ppid" class="menu__link">PPID</a>
+        <a href="kirim-berita.html" data-nav="kirim-berita" class="menu__link menu__cta--red">Kirim Berita</a>`;
+
+      const oldNav = $('nav.menu', navWrap);
+      if (oldNav) navWrap.replaceChild(menu, oldNav);
+      navWrap.insertBefore(toggle, menu);
+    }
+
+    // Set active state after ensuring menu exists
+    if (current) {
+      const map = { organisasi:'profil', tentang:'profil', kontak:'profil' };
+      const navKey = map[current] || current;
+      const link = document.querySelector(`a[data-nav="${navKey}"]`);
+      if (link) link.setAttribute('aria-current','page');
+    }
+  }
+
+  ensureMenu();
+
+  // Inject Kaltara crest into brand and footer + favicon
+  function ensureCrest(){
+    const candidates = ['assets/logo-kaltara.png','assets/logo-kaltara.webp','assets/logo-kaltara.svg'];
+    function pick(){ return candidates[0]; }
+    // Header logo
+    const logo = $('.brand__logo');
+    if (logo && !logo.querySelector('img')){
+      const img = document.createElement('img');
+      img.src = pick();
+      img.alt = 'Lambang Kalimantan Utara';
+      img.onerror = ()=> img.remove(); // fallback to gradient box
+      logo.appendChild(img);
+    }
+    // Footer brand
+    const fb = $('.footer__brand');
+    if (fb && !fb.querySelector('img')){
+      const img = document.createElement('img');
+      img.src = pick();
+      img.alt = 'Lambang Kalimantan Utara';
+      img.className = 'footer__crest';
+      img.onerror = ()=> img.remove();
+      fb.prepend(img);
+    }
+    // Favicon
+    if (!document.querySelector('link[rel="icon"]')){
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = pick();
+      document.head.appendChild(link);
+    }
+    // Hero crest fallback (both old and nova)
+    ['.hero__crest','.nova-crest','.bunda-hero'].forEach(sel=>{
+      const el = document.querySelector(sel);
+      if (el) el.onerror = ()=> el.remove();
+    });
+  }
+
+  ensureCrest();
+
+  // Mobile menu toggle
+  const toggleBtn = $('.nav__toggle');
+  const menu = $('#site-menu');
+  if (toggleBtn && menu) {
+    toggleBtn.addEventListener('click', ()=>{
+      const open = menu.classList.toggle('menu--open');
+      toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  // Submenu toggle (mobile only)
+  function isMobile(){ return window.matchMedia('(max-width: 980px)').matches; }
+  document.addEventListener('click', (e)=>{
+    const a = e.target.closest('.has-sub > a');
+    if (!a) return;
+    if (isMobile()){
+      e.preventDefault();
+      const parent = a.parentElement;
+      const open = parent.classList.toggle('open');
+      a.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  });
 
   // Page renderers
   const DATA = window.APP_DATA || {};
@@ -21,8 +126,11 @@
     const q = (searchEl?.value || '').toLowerCase();
     const tag = (tagSel?.value || '');
     listEl.innerHTML='';
-    DATA.posts
-      .filter(p => (!q || (p.title+" "+p.excerpt+" "+p.location).toLowerCase().includes(q)) && (!tag || p.tags.includes(tag)))
+    let coll = DATA.posts
+      .filter(p => (!q || (p.title+" "+p.excerpt+" "+p.location).toLowerCase().includes(q)) && (!tag || p.tags.includes(tag)));
+    const limit = Number(listEl?.dataset?.limit || 0);
+    if (limit > 0) coll = coll.slice(0, limit);
+    coll
       .forEach(p => {
         const el = document.createElement('article');
         el.className = 'card';
@@ -48,7 +156,10 @@
   function renderAlbums(listEl){
     if (!listEl) return;
     listEl.innerHTML='';
-    DATA.albums.forEach(a=>{
+    let coll = DATA.albums.slice();
+    const limit = Number(listEl?.dataset?.limit || 0);
+    if (limit > 0) coll = coll.slice(0, limit);
+    coll.forEach(a=>{
       const el = document.createElement('a');
       el.href = '#';
       el.className = 'card';
@@ -66,7 +177,10 @@
   function renderEvents(listEl){
     if (!listEl) return;
     listEl.innerHTML='';
-    DATA.events.forEach(ev=>{
+    let coll = DATA.events.slice();
+    const limit = Number(listEl?.dataset?.limit || 0);
+    if (limit > 0) coll = coll.slice(0, limit);
+    coll.forEach(ev=>{
       const d = new Date(ev.date);
       const el = document.createElement('div');
       el.className = 'agenda__item';
@@ -150,8 +264,11 @@
   document.addEventListener('DOMContentLoaded', ()=>{
     const page = document.body.getAttribute('data-page');
 
-    if (page === 'beranda') {
-      // Home sections rendered inline by HTML; nothing extra
+    if (page === 'beranda' || page === 'home') {
+      // Render limited lists on home
+      renderPosts(document.getElementById('posts'));
+      renderAlbums(document.getElementById('albums'));
+      renderEvents(document.getElementById('events'));
     }
 
     if (page === 'catatan') {
