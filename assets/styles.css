@@ -154,7 +154,7 @@ li{ text-align:justify; text-justify:inter-word; hyphens:auto }
 @media (max-width:980px){
   .hero--nova .container{padding:0 16px}
   /* Beri jarak cukup besar dari header */
-  .hero-nova__inner{grid-template-columns:1fr;grid-template-areas:'media' 'content';padding:72px 0 40px}
+  .hero-nova__inner{grid-template-columns:1fr;grid-template-areas:'media' 'content';padding:88px 0 40px}
   .nova-title{font-size:clamp(32px,8vw,40px)}
   /* Izinkan foto sedikit melewati bagian atas, bawah tetap pas */
   .nova-card{min-height:420px;overflow:visible}
