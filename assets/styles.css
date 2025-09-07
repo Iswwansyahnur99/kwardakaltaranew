@@ -149,7 +149,8 @@ footer a:hover{color:#ffffff}
   .nova-title{font-size:clamp(32px,8vw,40px)}
   .nova-card{min-height:320px}
   .bunda-hero{left:50%;right:auto;bottom:-6px;transform:translateX(-50%);height:118%;object-position:bottom center}
-  .nova-badge{top:12px;left:12px;bottom:auto;font-size:14px;padding:8px 12px;border-radius:12px;max-width:calc(100% - 24px - 24px);background:rgba(255,255,255,.96)}
+  .nova-badge{left:12px;bottom:12px;top:auto;font-size:14px;padding:8px 12px;border-radius:12px;max-width:calc(100% - 24px - 24px);background:rgba(255,255,255,.96);z-index:3}
+  .nova-card{padding-bottom:28px}
 }
 /* Overrides for crest + hero polish */
 .brand__logo{background:transparent !important;border-radius:0 !important;box-shadow:none !important;width:48px;height:48px}
