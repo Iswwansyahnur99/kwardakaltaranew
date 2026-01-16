@@ -342,4 +342,66 @@
       refresh(); q.addEventListener('input', refresh); t.addEventListener('change', refresh); y.addEventListener('change', refresh);
     }
   });
+  // Form handling with loading state
+  function handleFormSubmit(form) {
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+      }
+    });
+  }
+
+  // Initialize all forms
+  document.querySelectorAll('form[action*="formspree"]').forEach(handleFormSubmit);
+
+  // Check for success message on kontak page
+  if (window.location.search.includes('sent=1')) {
+    const container = document.querySelector('.grid.cols-2');
+    if (container) {
+      const successMsg = document.createElement('div');
+      successMsg.className = 'success-message';
+      successMsg.innerHTML = '<strong>Pesan Terkirim!</strong> Terima kasih telah menghubungi kami. Kami akan segera merespons pesan Anda.';
+      container.parentElement.insertBefore(successMsg, container);
+
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href === '#') return;
+
+      const target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Add stagger animation to grid items
+  function animateGridItems() {
+    const grids = document.querySelectorAll('.grid');
+    grids.forEach(grid => {
+      const items = grid.children;
+      Array.from(items).forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.animation = `fadeInUp 0.4s ease ${index * 0.1}s forwards`;
+      });
+    });
+  }
+
+  // Run animations after content loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', animateGridItems);
+  } else {
+    setTimeout(animateGridItems, 100);
+  }
 })();
