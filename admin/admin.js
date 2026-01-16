@@ -1,7 +1,7 @@
 /**
  * Admin Dashboard CMS for Pramuka Kaltara
  * Handles CRUD operations for posts, events, albums
- * Uses localStorage for data persistence
+ * Uses Firebase Firestore with localStorage fallback
  */
 
 (function() {
@@ -17,6 +17,14 @@
   const DEFAULT_CREDENTIALS = {
     username: 'admin',
     password: 'admin123'
+  };
+
+  // Firebase collections
+  const COLLECTIONS = {
+    POSTS: 'posts',
+    EVENTS: 'events',
+    ALBUMS: 'albums',
+    SETTINGS: 'settings'
   };
 
   // ============ DOM Elements ============
@@ -37,6 +45,20 @@
 
   // ============ State ============
   let currentData = null;
+  let useFirebase = false;
+  let db = null;
+
+  // ============ Firebase Initialization ============
+  function initFirebase() {
+    if (window.firebaseDB && window.isFirebaseConfigured && window.isFirebaseConfigured()) {
+      db = window.firebaseDB;
+      useFirebase = true;
+      console.log('Admin CMS: Using Firebase Firestore');
+      return true;
+    }
+    console.log('Admin CMS: Using localStorage fallback');
+    return false;
+  }
 
   // ============ Utilities ============
   function showToast(message, type = 'success') {
@@ -69,8 +91,47 @@
     return div.innerHTML;
   }
 
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+
   // ============ Data Management ============
-  function loadData() {
+  async function loadData() {
+    if (useFirebase) {
+      try {
+        currentData = { posts: [], events: [], albums: [], downloads: [], ppid: [] };
+
+        // Load all collections
+        const postsSnapshot = await db.collection(COLLECTIONS.POSTS).get();
+        postsSnapshot.forEach(doc => {
+          currentData.posts.push({ id: doc.id, ...doc.data() });
+        });
+
+        const eventsSnapshot = await db.collection(COLLECTIONS.EVENTS).get();
+        eventsSnapshot.forEach(doc => {
+          currentData.events.push({ id: doc.id, ...doc.data() });
+        });
+
+        const albumsSnapshot = await db.collection(COLLECTIONS.ALBUMS).get();
+        albumsSnapshot.forEach(doc => {
+          currentData.albums.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Also save to localStorage for frontend sync
+        localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(currentData));
+        console.log('Data loaded from Firebase');
+      } catch (error) {
+        console.error('Failed to load from Firebase:', error);
+        showToast('Gagal memuat data dari server', 'error');
+        loadFromLocalStorage();
+      }
+    } else {
+      loadFromLocalStorage();
+    }
+    return currentData;
+  }
+
+  function loadFromLocalStorage() {
     const stored = localStorage.getItem(STORAGE_KEYS.DATA);
     if (stored) {
       try {
@@ -84,23 +145,160 @@
     // If no stored data, use default from data.js
     if (!currentData && window.APP_DATA) {
       currentData = JSON.parse(JSON.stringify(window.APP_DATA));
-      saveData();
+      saveToLocalStorage();
     }
-
-    return currentData;
   }
 
-  function saveData() {
+  function saveToLocalStorage() {
     localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(currentData));
-    // Also update window.APP_DATA for the frontend
     window.APP_DATA = currentData;
+  }
+
+  async function saveData() {
+    saveToLocalStorage();
+    // Firebase saves happen in individual CRUD operations
+  }
+
+  // ============ Firebase CRUD Operations ============
+  async function firebaseAddPost(postData) {
+    if (!useFirebase) return null;
+    try {
+      const docRef = await db.collection(COLLECTIONS.POSTS).add(postData);
+      return docRef.id;
+    } catch (error) {
+      console.error('Firebase add post error:', error);
+      throw error;
+    }
+  }
+
+  async function firebaseUpdatePost(slug, postData) {
+    if (!useFirebase) return;
+    try {
+      const snapshot = await db.collection(COLLECTIONS.POSTS).where('slug', '==', slug).get();
+      if (!snapshot.empty) {
+        await snapshot.docs[0].ref.update(postData);
+      }
+    } catch (error) {
+      console.error('Firebase update post error:', error);
+      throw error;
+    }
+  }
+
+  async function firebaseDeletePost(slug) {
+    if (!useFirebase) return;
+    try {
+      const snapshot = await db.collection(COLLECTIONS.POSTS).where('slug', '==', slug).get();
+      if (!snapshot.empty) {
+        await snapshot.docs[0].ref.delete();
+      }
+    } catch (error) {
+      console.error('Firebase delete post error:', error);
+      throw error;
+    }
+  }
+
+  async function firebaseAddEvent(eventData) {
+    if (!useFirebase) return null;
+    try {
+      const docRef = await db.collection(COLLECTIONS.EVENTS).add(eventData);
+      return docRef.id;
+    } catch (error) {
+      console.error('Firebase add event error:', error);
+      throw error;
+    }
+  }
+
+  async function firebaseUpdateEvent(id, eventData) {
+    if (!useFirebase) return;
+    try {
+      await db.collection(COLLECTIONS.EVENTS).doc(id).update(eventData);
+    } catch (error) {
+      console.error('Firebase update event error:', error);
+      throw error;
+    }
+  }
+
+  async function firebaseDeleteEvent(id) {
+    if (!useFirebase) return;
+    try {
+      await db.collection(COLLECTIONS.EVENTS).doc(id).delete();
+    } catch (error) {
+      console.error('Firebase delete event error:', error);
+      throw error;
+    }
+  }
+
+  async function firebaseAddAlbum(albumData) {
+    if (!useFirebase) return null;
+    try {
+      const docRef = await db.collection(COLLECTIONS.ALBUMS).add(albumData);
+      return docRef.id;
+    } catch (error) {
+      console.error('Firebase add album error:', error);
+      throw error;
+    }
+  }
+
+  async function firebaseUpdateAlbum(id, albumData) {
+    if (!useFirebase) return;
+    try {
+      await db.collection(COLLECTIONS.ALBUMS).doc(id).update(albumData);
+    } catch (error) {
+      console.error('Firebase update album error:', error);
+      throw error;
+    }
+  }
+
+  async function firebaseDeleteAlbum(id) {
+    if (!useFirebase) return;
+    try {
+      await db.collection(COLLECTIONS.ALBUMS).doc(id).delete();
+    } catch (error) {
+      console.error('Firebase delete album error:', error);
+      throw error;
+    }
+  }
+
+  // Seed initial data to Firebase
+  async function seedFirebaseData() {
+    if (!useFirebase || !window.APP_DATA) return;
+
+    try {
+      // Check if data already exists
+      const postsSnapshot = await db.collection(COLLECTIONS.POSTS).limit(1).get();
+      if (!postsSnapshot.empty) {
+        console.log('Firebase already has data, skipping seed');
+        return;
+      }
+
+      console.log('Seeding initial data to Firebase...');
+
+      // Seed posts
+      for (const post of window.APP_DATA.posts || []) {
+        await db.collection(COLLECTIONS.POSTS).add(post);
+      }
+
+      // Seed events
+      for (const event of window.APP_DATA.events || []) {
+        await db.collection(COLLECTIONS.EVENTS).add(event);
+      }
+
+      // Seed albums
+      for (const album of window.APP_DATA.albums || []) {
+        await db.collection(COLLECTIONS.ALBUMS).add(album);
+      }
+
+      console.log('Firebase data seeding complete');
+      showToast('Data awal berhasil dimuat ke Firebase', 'success');
+    } catch (error) {
+      console.error('Failed to seed Firebase:', error);
+    }
   }
 
   function resetToDefault() {
     if (confirm('Yakin ingin mereset semua data ke default? Tindakan ini tidak dapat dibatalkan!')) {
       localStorage.removeItem(STORAGE_KEYS.DATA);
       if (window.APP_DATA) {
-        // Reload original data.js
         location.reload();
       }
       showToast('Data berhasil direset', 'success');
@@ -119,14 +317,46 @@
     showToast('Data berhasil di-export', 'success');
   }
 
-  function importData(file) {
+  async function importData(file) {
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
       try {
         const imported = JSON.parse(e.target.result);
         if (imported.posts && imported.events && imported.albums) {
           currentData = imported;
-          saveData();
+          saveToLocalStorage();
+
+          // If using Firebase, also sync to Firebase
+          if (useFirebase) {
+            showToast('Mengupload data ke Firebase...', 'info');
+
+            // Clear existing Firebase data
+            const batch = db.batch();
+
+            // Delete existing posts
+            const postsSnapshot = await db.collection(COLLECTIONS.POSTS).get();
+            postsSnapshot.forEach(doc => batch.delete(doc.ref));
+
+            const eventsSnapshot = await db.collection(COLLECTIONS.EVENTS).get();
+            eventsSnapshot.forEach(doc => batch.delete(doc.ref));
+
+            const albumsSnapshot = await db.collection(COLLECTIONS.ALBUMS).get();
+            albumsSnapshot.forEach(doc => batch.delete(doc.ref));
+
+            await batch.commit();
+
+            // Add new data
+            for (const post of imported.posts) {
+              await db.collection(COLLECTIONS.POSTS).add(post);
+            }
+            for (const event of imported.events) {
+              await db.collection(COLLECTIONS.EVENTS).add(event);
+            }
+            for (const album of imported.albums) {
+              await db.collection(COLLECTIONS.ALBUMS).add(album);
+            }
+          }
+
           renderAll();
           showToast('Data berhasil di-import', 'success');
         } else {
@@ -172,10 +402,10 @@
     dashboard.style.display = 'none';
   }
 
-  function showDashboard() {
+  async function showDashboard() {
     loginScreen.style.display = 'none';
     dashboard.style.display = 'flex';
-    loadData();
+    await loadData();
     renderAll();
   }
 
@@ -225,6 +455,27 @@
     renderPostsTable();
     renderEventsTable();
     renderAlbumsGrid();
+    renderFirebaseStatus();
+  }
+
+  function renderFirebaseStatus() {
+    // Add Firebase status indicator
+    const statusEl = $('#firebase-status');
+    if (!statusEl) {
+      const headerRight = $('.header-right');
+      if (headerRight) {
+        const status = document.createElement('span');
+        status.id = 'firebase-status';
+        status.className = 'firebase-status ' + (useFirebase ? 'connected' : 'local');
+        status.innerHTML = useFirebase
+          ? '🟢 Firebase'
+          : '🟡 Offline';
+        status.title = useFirebase
+          ? 'Tersambung ke Firebase'
+          : 'Mode lokal - data tersimpan di browser';
+        headerRight.insertBefore(status, headerRight.firstChild);
+      }
+    }
   }
 
   function renderStats() {
@@ -422,7 +673,7 @@
     });
   }
 
-  function savePost(existingSlug = null) {
+  async function savePost(existingSlug = null) {
     const title = $('#post-title').value.trim();
     const category = $('#post-category').value;
     const date = $('#post-date').value;
@@ -454,24 +705,30 @@
       cover
     };
 
-    if (existingSlug) {
-      // Update existing
-      const idx = currentData.posts.findIndex(p => p.slug === existingSlug);
-      if (idx !== -1) {
-        currentData.posts[idx] = postData;
+    try {
+      if (existingSlug) {
+        // Update existing
+        const idx = currentData.posts.findIndex(p => p.slug === existingSlug);
+        if (idx !== -1) {
+          currentData.posts[idx] = postData;
+          if (useFirebase) await firebaseUpdatePost(existingSlug, postData);
+        }
+      } else {
+        // Check for duplicate slug
+        if (currentData.posts.some(p => p.slug === slug)) {
+          postData.slug = slug + '-' + Date.now();
+        }
+        currentData.posts.unshift(postData);
+        if (useFirebase) await firebaseAddPost(postData);
       }
-    } else {
-      // Check for duplicate slug
-      if (currentData.posts.some(p => p.slug === slug)) {
-        postData.slug = slug + '-' + Date.now();
-      }
-      currentData.posts.unshift(postData);
-    }
 
-    saveData();
-    closeModal();
-    renderAll();
-    showToast(existingSlug ? 'Berita berhasil diperbarui' : 'Berita berhasil ditambahkan', 'success');
+      saveData();
+      closeModal();
+      renderAll();
+      showToast(existingSlug ? 'Berita berhasil diperbarui' : 'Berita berhasil ditambahkan', 'success');
+    } catch (error) {
+      showToast('Gagal menyimpan: ' + error.message, 'error');
+    }
   }
 
   function editPost(slug) {
@@ -481,12 +738,17 @@
     }
   }
 
-  function deletePost(slug) {
+  async function deletePost(slug) {
     if (confirm('Yakin ingin menghapus berita ini?')) {
-      currentData.posts = currentData.posts.filter(p => p.slug !== slug);
-      saveData();
-      renderAll();
-      showToast('Berita berhasil dihapus', 'success');
+      try {
+        if (useFirebase) await firebaseDeletePost(slug);
+        currentData.posts = currentData.posts.filter(p => p.slug !== slug);
+        saveData();
+        renderAll();
+        showToast('Berita berhasil dihapus', 'success');
+      } catch (error) {
+        showToast('Gagal menghapus: ' + error.message, 'error');
+      }
     }
   }
 
@@ -548,7 +810,7 @@
     });
   }
 
-  function saveEvent(existingIdx = null) {
+  async function saveEvent(existingIdx = null) {
     const title = $('#event-title').value.trim();
     const date = $('#event-date').value;
     const end = $('#event-end').value;
@@ -563,16 +825,28 @@
 
     const eventData = { title, date, end, location, organizer, url };
 
-    if (existingIdx !== null) {
-      currentData.events[existingIdx] = eventData;
-    } else {
-      currentData.events.unshift(eventData);
-    }
+    try {
+      if (existingIdx !== null) {
+        const existingEvent = currentData.events[existingIdx];
+        currentData.events[existingIdx] = eventData;
+        if (useFirebase && existingEvent.id) {
+          await firebaseUpdateEvent(existingEvent.id, eventData);
+        }
+      } else {
+        if (useFirebase) {
+          const id = await firebaseAddEvent(eventData);
+          eventData.id = id;
+        }
+        currentData.events.unshift(eventData);
+      }
 
-    saveData();
-    closeModal();
-    renderAll();
-    showToast(existingIdx !== null ? 'Agenda berhasil diperbarui' : 'Agenda berhasil ditambahkan', 'success');
+      saveData();
+      closeModal();
+      renderAll();
+      showToast(existingIdx !== null ? 'Agenda berhasil diperbarui' : 'Agenda berhasil ditambahkan', 'success');
+    } catch (error) {
+      showToast('Gagal menyimpan: ' + error.message, 'error');
+    }
   }
 
   function editEvent(idx) {
@@ -582,12 +856,20 @@
     }
   }
 
-  function deleteEvent(idx) {
+  async function deleteEvent(idx) {
     if (confirm('Yakin ingin menghapus agenda ini?')) {
-      currentData.events.splice(idx, 1);
-      saveData();
-      renderAll();
-      showToast('Agenda berhasil dihapus', 'success');
+      try {
+        const event = currentData.events[idx];
+        if (useFirebase && event.id) {
+          await firebaseDeleteEvent(event.id);
+        }
+        currentData.events.splice(idx, 1);
+        saveData();
+        renderAll();
+        showToast('Agenda berhasil dihapus', 'success');
+      } catch (error) {
+        showToast('Gagal menghapus: ' + error.message, 'error');
+      }
     }
   }
 
@@ -639,7 +921,7 @@
     });
   }
 
-  function saveAlbum(existingIdx = null) {
+  async function saveAlbum(existingIdx = null) {
     const title = $('#album-title').value.trim();
     const location = $('#album-location').value.trim();
     const year = parseInt($('#album-year').value) || new Date().getFullYear();
@@ -652,16 +934,28 @@
 
     const albumData = { title, location, year, count };
 
-    if (existingIdx !== null) {
-      currentData.albums[existingIdx] = albumData;
-    } else {
-      currentData.albums.unshift(albumData);
-    }
+    try {
+      if (existingIdx !== null) {
+        const existingAlbum = currentData.albums[existingIdx];
+        currentData.albums[existingIdx] = albumData;
+        if (useFirebase && existingAlbum.id) {
+          await firebaseUpdateAlbum(existingAlbum.id, albumData);
+        }
+      } else {
+        if (useFirebase) {
+          const id = await firebaseAddAlbum(albumData);
+          albumData.id = id;
+        }
+        currentData.albums.unshift(albumData);
+      }
 
-    saveData();
-    closeModal();
-    renderAll();
-    showToast(existingIdx !== null ? 'Album berhasil diperbarui' : 'Album berhasil ditambahkan', 'success');
+      saveData();
+      closeModal();
+      renderAll();
+      showToast(existingIdx !== null ? 'Album berhasil diperbarui' : 'Album berhasil ditambahkan', 'success');
+    } catch (error) {
+      showToast('Gagal menyimpan: ' + error.message, 'error');
+    }
   }
 
   function editAlbum(idx) {
@@ -671,12 +965,20 @@
     }
   }
 
-  function deleteAlbum(idx) {
+  async function deleteAlbum(idx) {
     if (confirm('Yakin ingin menghapus album ini?')) {
-      currentData.albums.splice(idx, 1);
-      saveData();
-      renderAll();
-      showToast('Album berhasil dihapus', 'success');
+      try {
+        const album = currentData.albums[idx];
+        if (useFirebase && album.id) {
+          await firebaseDeleteAlbum(album.id);
+        }
+        currentData.albums.splice(idx, 1);
+        saveData();
+        renderAll();
+        showToast('Album berhasil dihapus', 'success');
+      } catch (error) {
+        showToast('Gagal menghapus: ' + error.message, 'error');
+      }
     }
   }
 
@@ -810,11 +1112,16 @@
   }
 
   // ============ Initialize ============
-  function init() {
+  async function init() {
+    initFirebase();
     initEventListeners();
 
     if (isAuthenticated()) {
-      showDashboard();
+      await showDashboard();
+      // Seed data to Firebase if needed
+      if (useFirebase) {
+        await seedFirebaseData();
+      }
     } else {
       showLoginScreen();
     }
