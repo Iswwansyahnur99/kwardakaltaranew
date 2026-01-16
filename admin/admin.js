@@ -47,13 +47,18 @@
   let currentData = null;
   let useFirebase = false;
   let db = null;
+  let storage = null;
 
   // ============ Firebase Initialization ============
   function initFirebase() {
     if (window.firebaseDB && window.isFirebaseConfigured && window.isFirebaseConfigured()) {
       db = window.firebaseDB;
+      storage = window.firebaseStorage || null;
       useFirebase = true;
       console.log('Admin CMS: Using Firebase Firestore');
+      if (storage) {
+        console.log('Admin CMS: Firebase Storage available');
+      }
       return true;
     }
     console.log('Admin CMS: Using localStorage fallback');
@@ -93,6 +98,280 @@
 
   function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+
+  // ============ Image Upload Functions ============
+
+  // Compress image before upload
+  function compressImage(file, maxWidth = 1200, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => resolve(blob),
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Upload image to Firebase Storage
+  async function uploadImageToStorage(file, folder = 'images') {
+    if (!storage) {
+      showToast('Firebase Storage tidak tersedia', 'error');
+      return null;
+    }
+
+    try {
+      // Compress image first
+      const compressedBlob = await compressImage(file);
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filename = `${folder}/${timestamp}_${safeName}`;
+
+      // Create storage reference
+      const storageRef = storage.ref(filename);
+
+      // Upload file with progress tracking
+      const uploadTask = storageRef.put(compressedBlob, {
+        contentType: 'image/jpeg'
+      });
+
+      // Return promise that tracks upload progress
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            updateUploadProgress(progress);
+          },
+          (error) => {
+            console.error('Upload error:', error);
+            reject(error);
+          },
+          async () => {
+            // Get download URL
+            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+            resolve(downloadURL);
+          }
+        );
+      });
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      throw error;
+    }
+  }
+
+  // Delete image from Firebase Storage
+  async function deleteImageFromStorage(imageUrl) {
+    if (!storage || !imageUrl) return;
+
+    try {
+      // Extract path from URL
+      const baseUrl = 'https://firebasestorage.googleapis.com/v0/b/';
+      if (!imageUrl.includes(baseUrl)) return;
+
+      // Create reference from URL and delete
+      const imageRef = storage.refFromURL(imageUrl);
+      await imageRef.delete();
+      console.log('Image deleted from storage');
+    } catch (error) {
+      // Ignore error if file doesn't exist
+      if (error.code !== 'storage/object-not-found') {
+        console.error('Failed to delete image:', error);
+      }
+    }
+  }
+
+  // Update upload progress UI
+  function updateUploadProgress(progress) {
+    const progressBar = $('#upload-progress-bar');
+    const progressText = $('#upload-progress-text');
+    if (progressBar) {
+      progressBar.style.width = progress + '%';
+    }
+    if (progressText) {
+      progressText.textContent = Math.round(progress) + '%';
+    }
+  }
+
+  // Get upload component HTML
+  function getUploadComponentHtml(fieldId, currentUrl = '', label = 'Upload Gambar') {
+    const hasStorage = !!storage;
+    const previewStyle = currentUrl ? '' : 'display:none';
+
+    return `
+      <div class="upload-component" id="${fieldId}-component">
+        <label class="upload-label">${label}</label>
+
+        ${hasStorage ? `
+          <div class="upload-area" id="${fieldId}-area">
+            <div class="upload-dropzone" id="${fieldId}-dropzone">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">
+                <span class="upload-main">Klik atau drag gambar ke sini</span>
+                <span class="upload-hint">JPG, PNG, WebP (Max 5MB)</span>
+              </div>
+              <input type="file" id="${fieldId}-file" accept="image/*" class="upload-input">
+            </div>
+
+            <div class="upload-progress" id="${fieldId}-progress" style="display:none">
+              <div class="progress-bar-container">
+                <div class="progress-bar" id="upload-progress-bar"></div>
+              </div>
+              <span class="progress-text" id="upload-progress-text">0%</span>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="upload-preview" id="${fieldId}-preview" style="${previewStyle}">
+          <img src="${escapeHtml(currentUrl)}" alt="Preview" id="${fieldId}-preview-img">
+          <button type="button" class="btn btn--danger btn--icon upload-remove" id="${fieldId}-remove" title="Hapus gambar">✕</button>
+        </div>
+
+        <div class="upload-url-input">
+          <label for="${fieldId}-url">Atau masukkan URL gambar:</label>
+          <input type="url" id="${fieldId}-url" value="${escapeHtml(currentUrl)}" placeholder="https://example.com/image.jpg">
+        </div>
+
+        <input type="hidden" id="${fieldId}" value="${escapeHtml(currentUrl)}">
+      </div>
+    `;
+  }
+
+  // Initialize upload component handlers
+  function initUploadComponent(fieldId) {
+    const component = $(`#${fieldId}-component`);
+    if (!component) return;
+
+    const fileInput = $(`#${fieldId}-file`);
+    const dropzone = $(`#${fieldId}-dropzone`);
+    const urlInput = $(`#${fieldId}-url`);
+    const preview = $(`#${fieldId}-preview`);
+    const previewImg = $(`#${fieldId}-preview-img`);
+    const removeBtn = $(`#${fieldId}-remove`);
+    const hiddenInput = $(`#${fieldId}`);
+    const progressContainer = $(`#${fieldId}-progress`);
+
+    // File input change
+    if (fileInput) {
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) await handleFileUpload(file, fieldId);
+      });
+    }
+
+    // Drag and drop
+    if (dropzone) {
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+      });
+
+      dropzone.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+          await handleFileUpload(file, fieldId);
+        } else {
+          showToast('File harus berupa gambar', 'error');
+        }
+      });
+
+      dropzone.addEventListener('click', () => {
+        fileInput?.click();
+      });
+    }
+
+    // URL input change
+    if (urlInput) {
+      urlInput.addEventListener('change', () => {
+        const url = urlInput.value.trim();
+        if (url) {
+          hiddenInput.value = url;
+          previewImg.src = url;
+          preview.style.display = 'block';
+        } else {
+          hiddenInput.value = '';
+          preview.style.display = 'none';
+        }
+      });
+    }
+
+    // Remove button
+    if (removeBtn) {
+      removeBtn.addEventListener('click', () => {
+        hiddenInput.value = '';
+        if (urlInput) urlInput.value = '';
+        preview.style.display = 'none';
+      });
+    }
+
+    // Handle file upload
+    async function handleFileUpload(file, fieldId) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Ukuran file maksimal 5MB', 'error');
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showToast('File harus berupa gambar', 'error');
+        return;
+      }
+
+      try {
+        // Show progress
+        if (progressContainer) progressContainer.style.display = 'flex';
+
+        const downloadURL = await uploadImageToStorage(file, 'covers');
+
+        if (downloadURL) {
+          hiddenInput.value = downloadURL;
+          if (urlInput) urlInput.value = downloadURL;
+          previewImg.src = downloadURL;
+          preview.style.display = 'block';
+          showToast('Gambar berhasil diupload', 'success');
+        }
+      } catch (error) {
+        showToast('Gagal upload gambar: ' + error.message, 'error');
+      } finally {
+        if (progressContainer) progressContainer.style.display = 'none';
+        if (fileInput) fileInput.value = '';
+      }
+    }
   }
 
   // ============ Data Management ============
@@ -588,7 +867,9 @@
 
     grid.innerHTML = albums.map((album, idx) => `
       <div class="album-card">
-        <div class="album-card__cover">🖼️</div>
+        <div class="album-card__cover" ${album.cover ? `style="background-image: url('${escapeHtml(album.cover)}'); background-size: cover; background-position: center;"` : ''}>
+          ${!album.cover ? '🖼️' : ''}
+        </div>
         <div class="album-card__body">
           <div class="album-card__title">${escapeHtml(album.title)}</div>
           <div class="album-card__meta">${album.location} • ${album.year} • ${album.count} foto</div>
@@ -652,10 +933,7 @@
           <input type="text" id="post-tags" value="${escapeHtml(tags)}" placeholder="Contoh: Kegiatan, Pelatihan, Bakti">
         </div>
 
-        <div class="form-group">
-          <label for="post-cover">URL Cover Image</label>
-          <input type="url" id="post-cover" value="${escapeHtml(post?.cover || '')}" placeholder="https://example.com/image.jpg">
-        </div>
+        ${getUploadComponentHtml('post-cover', post?.cover || '', 'Cover Image')}
 
         ${isEdit ? `<input type="hidden" id="post-slug" value="${post.slug}">` : ''}
 
@@ -670,6 +948,9 @@
   function showPostForm(post = null) {
     const title = post ? 'Edit Berita' : 'Tambah Berita Baru';
     openModal(title, getPostFormHtml(post));
+
+    // Initialize upload component
+    initUploadComponent('post-cover');
 
     $('#post-form').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -904,6 +1185,8 @@
           <input type="number" id="album-count" required value="${album?.count || 0}" min="0">
         </div>
 
+        ${getUploadComponentHtml('album-cover', album?.cover || '', 'Cover Album')}
+
         ${isEdit ? `<input type="hidden" id="album-idx" value="${album._idx}">` : ''}
 
         <div class="modal__footer">
@@ -919,6 +1202,9 @@
     if (album && idx !== null) album._idx = idx;
     openModal(title, getAlbumFormHtml(album));
 
+    // Initialize upload component
+    initUploadComponent('album-cover');
+
     $('#album-form').addEventListener('submit', function(e) {
       e.preventDefault();
       saveAlbum(idx);
@@ -930,13 +1216,14 @@
     const location = $('#album-location').value.trim();
     const year = parseInt($('#album-year').value) || new Date().getFullYear();
     const count = parseInt($('#album-count').value) || 0;
+    const cover = $('#album-cover').value.trim();
 
     if (!title || !location) {
       showToast('Mohon lengkapi semua field yang wajib', 'error');
       return;
     }
 
-    const albumData = { title, location, year, count };
+    const albumData = { title, location, year, count, cover };
 
     try {
       if (existingIdx !== null) {

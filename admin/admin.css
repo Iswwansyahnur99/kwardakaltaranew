@@ -873,3 +873,190 @@ body {
 .toast.info {
   background: var(--primary-light);
 }
+
+/* ============ Upload Component Styles ============ */
+.upload-component {
+  margin-bottom: 16px;
+}
+
+.upload-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--gray-700);
+}
+
+.upload-area {
+  margin-bottom: 12px;
+}
+
+.upload-dropzone {
+  border: 2px dashed var(--gray-300);
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--gray-50);
+  position: relative;
+}
+
+.upload-dropzone:hover {
+  border-color: var(--primary-light);
+  background: rgba(77, 168, 218, 0.05);
+}
+
+.upload-dropzone.dragover {
+  border-color: var(--primary);
+  background: rgba(77, 168, 218, 0.1);
+  transform: scale(1.01);
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upload-main {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.upload-hint {
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.upload-input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+}
+
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-light), var(--primary));
+  border-radius: 999px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 40px;
+  text-align: right;
+}
+
+.upload-preview {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.upload-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.upload-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  border-radius: 50%;
+  background: rgba(224, 36, 36, 0.9);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.upload-remove:hover {
+  background: var(--danger);
+  transform: scale(1.1);
+}
+
+.upload-url-input {
+  margin-top: 8px;
+}
+
+.upload-url-input label {
+  display: block;
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-bottom: 6px;
+}
+
+.upload-url-input input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.upload-url-input input:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(77, 168, 218, 0.15);
+}
+
+.upload-url-input input::placeholder {
+  color: var(--gray-400);
+}
+
+/* Storage not available notice */
+.upload-component:not(:has(.upload-dropzone)) .upload-url-input {
+  margin-top: 0;
+}
+
+.upload-component:not(:has(.upload-dropzone)) .upload-url-input label {
+  color: var(--gray-600);
+  font-weight: 500;
+}

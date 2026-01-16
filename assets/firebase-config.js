@@ -19,9 +19,13 @@ const db = firebase.firestore();
 // Initialize Auth
 const auth = firebase.auth();
 
+// Initialize Storage
+const storage = firebase.storage();
+
 // Export for use in other files
 window.firebaseDB = db;
 window.firebaseAuth = auth;
+window.firebaseStorage = storage;
 
 // Helper function to check if Firebase is configured
 window.isFirebaseConfigured = function() {
