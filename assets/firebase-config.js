@@ -1,14 +1,13 @@
-// Firebase Configuration
-// PENTING: Ganti dengan config dari Firebase Console Anda
-// Langkah: Firebase Console > Project Settings > Your Apps > Config
+// Firebase Configuration for Pramuka Kaltara CMS
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCR4ASGnVYgSGmNhV9SS0jvLvY1UeMXx4Q",
+  authDomain: "pramuka-kaltara.firebaseapp.com",
+  projectId: "pramuka-kaltara",
+  storageBucket: "pramuka-kaltara.firebasestorage.app",
+  messagingSenderId: "150809477900",
+  appId: "1:150809477900:web:54bcc354a87c097df67f29",
+  measurementId: "G-TCPERMJ2P4"
 };
 
 // Initialize Firebase
