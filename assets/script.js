@@ -147,7 +147,7 @@
             <div class="meta">${p.location} • ${new Date(p.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
             <p>${p.excerpt}</p>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-            <div style="margin-top:10px"><a class="btn" href="berita-detail.html?slug=${encodeURIComponent(p.slug)}">Baca berita</a></div>
+            <div style="margin-top:10px"><a class="btn" href="berita/${encodeURIComponent(p.slug)}">Baca berita</a></div>
           </div>`;
         listEl.appendChild(el);
       });
@@ -294,8 +294,12 @@
     }
 
     if (page === 'berita-detail') {
-      const params = new URLSearchParams(location.search);
-      const slug = params.get('slug');
+      // Get slug from path (clean URL) or query string (fallback)
+      let slug = window.BERITA_SLUG;
+      if (!slug) {
+        const params = new URLSearchParams(location.search);
+        slug = params.get('slug');
+      }
       const post = DATA.posts.find(p=>p.slug===slug);
       const wrap = document.getElementById('post-detail');
       const crumb = document.getElementById('crumb-title');

@@ -1,0 +1,15 @@
+RewriteEngine On
+
+# Redirect /berita/slug to /berita/index.html (clean URLs for berita)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^berita/(.+)$ berita/index.html [L,QSA]
+
+# ============================================
+# Nginx Configuration (untuk referensi)
+# Tambahkan ke server block di nginx.conf:
+# ============================================
+# location /berita/ {
+#     try_files $uri $uri/ /berita/index.html;
+# }
+# ============================================
