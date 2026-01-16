@@ -290,6 +290,10 @@
 
       console.log('Firebase data seeding complete');
       showToast('Data awal berhasil dimuat ke Firebase', 'success');
+
+      // Reload data to reflect seeding immediately
+      await loadData();
+      renderAll();
     } catch (error) {
       console.error('Failed to seed Firebase:', error);
     }

@@ -1,120 +1,57 @@
-# Panduan Setup Firebase untuk Pramuka Kaltara CMS
+# Panduan Setup Firebase - Pramuka Kaltara
 
-## Langkah 1: Buat Project Firebase
+Dokumen ini berisi panduan langkah demi langkah untuk menghubungkan Admin Dashboard Pramuka Kaltara dengan Firebase Firestore.
 
-1. Buka [Firebase Console](https://console.firebase.google.com/)
-2. Login dengan akun Google Cloud Anda (yang memiliki $300 credit)
-3. Klik **"Create a project"** atau **"Add project"**
-4. Masukkan nama project: `pramuka-kaltara` (atau nama lain yang Anda inginkan)
-5. Enable Google Analytics jika diinginkan (opsional)
-6. Klik **"Create project"**
+## 1. Persiapan Project Firebase
+1. Buka [Firebase Console](https://console.firebase.google.com/).
+2. Klik **Add project** dan beri nama `pramuka-kaltara`.
+3. Matikan Google Analytics (opsional) dan klik **Create project**.
 
-## Langkah 2: Tambahkan Web App
+## 2. Setup Firestore Database
+1. Di menu sidebar kiri, pilih **Build** > **Firestore Database**.
+2. Klik **Create database**.
+3. Pilih lokasi server: **asia-southeast1** (Singapore) agar latensi rendah.
+4. Pada langkah Security Rules, pilih **Start in test mode**.
+   - *Catatan: Mode ini mengizinkan read/write publik selama 30 hari. Untuk produksi, rules perlu diperketat.*
+5. Klik **Create**.
 
-1. Di dashboard project, klik ikon **Web** (`</>`)
-2. Masukkan nama app: `Pramuka Kaltara Web`
-3. Klik **"Register app"**
-4. Anda akan mendapatkan konfigurasi Firebase seperti ini:
+## 3. Registrasi Web App
+1. Di halaman Project Overview, klik icon **Web** (`</>`).
+2. Masukkan nama aplikasi: `Pramuka Kaltara Web`.
+3. Klik **Register app**.
+4. Anda akan melihat konfigurasi `firebaseConfig`. Salin bagian object config-nya saja.
 
-```javascript
-const firebaseConfig = {
-  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-  authDomain: "pramuka-kaltara.firebaseapp.com",
-  projectId: "pramuka-kaltara",
-  storageBucket: "pramuka-kaltara.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdefghijk"
-};
-```
+## 4. Konfigurasi Kode
+1. Buka file `assets/firebase-config.js` di text editor.
+2. Ganti nilai `firebaseConfig` dengan yang Anda salin dari Firebase Console.
+   ```javascript
+   const firebaseConfig = {
+     apiKey: "AIzaSy...",
+     authDomain: "pramuka-kaltara.firebaseapp.com",
+     projectId: "pramuka-kaltara",
+     storageBucket: "pramuka-kaltara.firebasestorage.app",
+     messagingSenderId: "...",
+     appId: "..."
+   };
+   ```
 
-## Langkah 3: Setup Firestore Database
+## 5. Verifikasi Instalasi
+1. Buka file `admin/index.html` di browser.
+2. Login ke dashboard (default: `admin` / `admin123`).
+3. Perhatikan indikator status di pojok kanan atas header:
+   - **🟢 Firebase**: Berarti aplikasi berhasil terhubung ke Firestore.
+   - **🟡 Offline**: Berarti aplikasi menggunakan LocalStorage (cek koneksi atau config).
+4. Jika database Firestore masih kosong, aplikasi akan otomatis melakukan **Seeding** (mengupload data awal dari `assets/data.js` ke Firestore).
 
-1. Di sidebar Firebase Console, klik **"Firestore Database"**
-2. Klik **"Create database"**
-3. Pilih lokasi server terdekat (asia-southeast1 untuk Indonesia)
-4. Pilih **"Start in test mode"** untuk development
-5. Klik **"Create"**
-
-### Atur Firestore Rules (Keamanan)
-
-Setelah database dibuat, update rules untuk keamanan yang lebih baik:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Allow read access to everyone (for website)
-    match /posts/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    match /events/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    match /albums/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-  }
-}
-```
-
-## Langkah 4: Update Konfigurasi di Website
-
-Buka file `assets/firebase-config.js` dan ganti dengan konfigurasi dari Firebase Console:
-
-```javascript
-const firebaseConfig = {
-  apiKey: "GANTI_DENGAN_API_KEY_ANDA",
-  authDomain: "GANTI_DENGAN_PROJECT_ID.firebaseapp.com",
-  projectId: "GANTI_DENGAN_PROJECT_ID",
-  storageBucket: "GANTI_DENGAN_PROJECT_ID.appspot.com",
-  messagingSenderId: "GANTI_DENGAN_SENDER_ID",
-  appId: "GANTI_DENGAN_APP_ID"
-};
-```
-
-## Langkah 5: Test Koneksi
-
-1. Buka halaman admin: `https://your-site.com/admin/`
-2. Login dengan username/password
-3. Cek di header dashboard - harus muncul "🟢 Firebase" jika terhubung
-4. Jika muncul "🟡 Offline", berarti masih menggunakan localStorage (cek konfigurasi)
-
-## Langkah 6: Seed Data Awal
-
-Setelah Firebase terhubung:
-1. Login ke admin dashboard
-2. Data akan otomatis di-seed ke Firebase saat pertama kali
-3. Atau gunakan tombol "Import Data" untuk upload data JSON
-
-## Estimasi Biaya
-
-Dengan $300 credit Google Cloud:
-
-| Service | Free Tier | Estimasi Bulanan |
-|---------|-----------|------------------|
-| Firestore | 1GB storage, 50K reads/day | ~$0-5 |
-| Authentication | 10K users | Free |
-| Hosting (opsional) | 10GB/month | Free |
-
-**Total estimasi: $0-5/bulan** - Credit $300 bisa bertahan 2-3 tahun untuk traffic website Pramuka!
+## Struktur Data Firestore
+Aplikasi menggunakan collection berikut:
+- `posts`: Artikel berita dan kegiatan.
+- `events`: Agenda kegiatan mendatang dan lampau.
+- `albums`: Galeri foto kegiatan.
 
 ## Troubleshooting
-
-### "Firebase not configured"
-- Pastikan `firebase-config.js` sudah diupdate dengan konfigurasi yang benar
-- Pastikan Firebase SDK sudah di-load sebelum `firebase-config.js`
-
-### "Permission denied"
-- Cek Firestore Rules sudah diset dengan benar
-- Pastikan database sudah dalam mode "test" atau rules sudah diupdate
-
-### Data tidak sync
-- Clear localStorage browser: `localStorage.clear()`
-- Refresh halaman admin
-
-## Kontak Support
-
-Jika ada masalah, hubungi tim developer atau buka issue di repository GitHub.
+- **Error: "Firebase: Error (auth/invalid-api-key)"**
+  - Pastikan `apiKey` di `firebase-config.js` sudah benar dan tidak ada spasi tambahan.
+- **Data tidak muncul**
+  - Cek Console browser (F12 > Console) untuk melihat pesan error spesifik.
+  - Pastikan Firestore Security Rules dalam mode Test atau Public.
