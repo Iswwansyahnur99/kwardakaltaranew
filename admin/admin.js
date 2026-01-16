@@ -528,103 +528,161 @@
     // Firebase saves happen in individual CRUD operations
   }
 
+  // ============ Firebase Error Handler ============
+  function handleFirebaseError(error, operation) {
+    console.error(`Firebase ${operation} error:`, error);
+
+    // Parse error code
+    const errorCode = error.code || '';
+    const errorMessage = error.message || '';
+
+    // Provide specific error messages based on error code
+    if (errorCode === 'permission-denied' || errorMessage.includes('permission')) {
+      return new Error(
+        'AKSES DITOLAK: Firestore Security Rules tidak mengizinkan operasi ini. ' +
+        'Buka Firebase Console > Firestore Database > Rules, dan pastikan rules mengizinkan read/write. ' +
+        'Contoh rules untuk development:\n' +
+        'rules_version = "2";\n' +
+        'service cloud.firestore {\n' +
+        '  match /databases/{database}/documents {\n' +
+        '    match /{document=**} {\n' +
+        '      allow read, write: if true;\n' +
+        '    }\n' +
+        '  }\n' +
+        '}'
+      );
+    }
+
+    if (errorCode === 'unavailable' || errorCode === 'failed-precondition') {
+      return new Error('Firestore tidak tersedia. Periksa koneksi internet Anda.');
+    }
+
+    if (errorCode === 'unauthenticated') {
+      return new Error('Autentikasi Firebase gagal. Silakan refresh halaman.');
+    }
+
+    if (errorCode === 'not-found') {
+      return new Error('Data tidak ditemukan di Firestore.');
+    }
+
+    if (errorCode === 'already-exists') {
+      return new Error('Data sudah ada di Firestore.');
+    }
+
+    if (errorCode === 'resource-exhausted') {
+      return new Error('Kuota Firebase habis. Tunggu beberapa saat atau upgrade plan.');
+    }
+
+    // Generic error
+    return new Error(`Firebase error: ${errorMessage || errorCode || 'Unknown error'}`);
+  }
+
   // ============ Firebase CRUD Operations ============
   async function firebaseAddPost(postData) {
     if (!useFirebase) return null;
     try {
+      console.log('Firebase: Adding post...', postData.title);
       const docRef = await db.collection(COLLECTIONS.POSTS).add(postData);
+      console.log('Firebase: Post added with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error('Firebase add post error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'add post');
     }
   }
 
   async function firebaseUpdatePost(slug, postData) {
     if (!useFirebase) return;
     try {
+      console.log('Firebase: Updating post...', slug);
       const snapshot = await db.collection(COLLECTIONS.POSTS).where('slug', '==', slug).get();
       if (!snapshot.empty) {
         await snapshot.docs[0].ref.update(postData);
+        console.log('Firebase: Post updated');
       }
     } catch (error) {
-      console.error('Firebase update post error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'update post');
     }
   }
 
   async function firebaseDeletePost(slug) {
     if (!useFirebase) return;
     try {
+      console.log('Firebase: Deleting post...', slug);
       const snapshot = await db.collection(COLLECTIONS.POSTS).where('slug', '==', slug).get();
       if (!snapshot.empty) {
         await snapshot.docs[0].ref.delete();
+        console.log('Firebase: Post deleted');
       }
     } catch (error) {
-      console.error('Firebase delete post error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'delete post');
     }
   }
 
   async function firebaseAddEvent(eventData) {
     if (!useFirebase) return null;
     try {
+      console.log('Firebase: Adding event...', eventData.title);
       const docRef = await db.collection(COLLECTIONS.EVENTS).add(eventData);
+      console.log('Firebase: Event added with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error('Firebase add event error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'add event');
     }
   }
 
   async function firebaseUpdateEvent(id, eventData) {
     if (!useFirebase) return;
     try {
+      console.log('Firebase: Updating event...', id);
       await db.collection(COLLECTIONS.EVENTS).doc(id).update(eventData);
+      console.log('Firebase: Event updated');
     } catch (error) {
-      console.error('Firebase update event error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'update event');
     }
   }
 
   async function firebaseDeleteEvent(id) {
     if (!useFirebase) return;
     try {
+      console.log('Firebase: Deleting event...', id);
       await db.collection(COLLECTIONS.EVENTS).doc(id).delete();
+      console.log('Firebase: Event deleted');
     } catch (error) {
-      console.error('Firebase delete event error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'delete event');
     }
   }
 
   async function firebaseAddAlbum(albumData) {
     if (!useFirebase) return null;
     try {
+      console.log('Firebase: Adding album...', albumData.title);
       const docRef = await db.collection(COLLECTIONS.ALBUMS).add(albumData);
+      console.log('Firebase: Album added with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error('Firebase add album error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'add album');
     }
   }
 
   async function firebaseUpdateAlbum(id, albumData) {
     if (!useFirebase) return;
     try {
+      console.log('Firebase: Updating album...', id);
       await db.collection(COLLECTIONS.ALBUMS).doc(id).update(albumData);
+      console.log('Firebase: Album updated');
     } catch (error) {
-      console.error('Firebase update album error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'update album');
     }
   }
 
   async function firebaseDeleteAlbum(id) {
     if (!useFirebase) return;
     try {
+      console.log('Firebase: Deleting album...', id);
       await db.collection(COLLECTIONS.ALBUMS).doc(id).delete();
+      console.log('Firebase: Album deleted');
     } catch (error) {
-      console.error('Firebase delete album error:', error);
-      throw error;
+      throw handleFirebaseError(error, 'delete album');
     }
   }
 

@@ -49,9 +49,98 @@ Aplikasi menggunakan collection berikut:
 - `events`: Agenda kegiatan mendatang dan lampau.
 - `albums`: Galeri foto kegiatan.
 
+## 6. Setup Firebase Storage (untuk Upload Gambar)
+1. Di menu sidebar kiri, pilih **Build** > **Storage**.
+2. Klik **Get started**.
+3. Pilih lokasi: **us-central1** (gratis) atau lokasi lain sesuai kebutuhan.
+4. Klik **Done**.
+5. Pergi ke tab **Rules** dan ganti dengan rules berikut:
+   ```
+   rules_version = '2';
+   service firebase.storage {
+     match /b/{bucket}/o {
+       match /{allPaths=**} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+6. Klik **Publish** untuk menyimpan rules.
+
+## PENTING: Konfigurasi Firestore Security Rules
+
+**Jika data gagal disimpan, kemungkinan besar masalahnya adalah Firestore Security Rules.**
+
+### Cara Mengecek dan Update Firestore Rules:
+1. Buka [Firebase Console](https://console.firebase.google.com/)
+2. Pilih project **pramuka-kaltara**
+3. Di menu sidebar, pilih **Firestore Database**
+4. Klik tab **Rules** di bagian atas
+5. Ganti rules dengan kode berikut:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+6. Klik **Publish** untuk menyimpan rules
+
+**⚠️ PERINGATAN:** Rules di atas mengizinkan siapa saja membaca dan menulis data. Ini cocok untuk development/testing. Untuk produksi, gunakan rules yang lebih ketat dengan autentikasi.
+
+### Rules untuk Produksi (dengan autentikasi):
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow anyone to read
+    match /{document=**} {
+      allow read: if true;
+    }
+
+    // Only authenticated users can write
+    match /posts/{postId} {
+      allow write: if request.auth != null;
+    }
+    match /events/{eventId} {
+      allow write: if request.auth != null;
+    }
+    match /albums/{albumId} {
+      allow write: if request.auth != null;
+    }
+  }
+}
+```
+
 ## Troubleshooting
-- **Error: "Firebase: Error (auth/invalid-api-key)"**
-  - Pastikan `apiKey` di `firebase-config.js` sudah benar dan tidak ada spasi tambahan.
-- **Data tidak muncul**
-  - Cek Console browser (F12 > Console) untuk melihat pesan error spesifik.
-  - Pastikan Firestore Security Rules dalam mode Test atau Public.
+
+### Error: "AKSES DITOLAK" atau "permission-denied"
+**Penyebab:** Firestore Security Rules tidak mengizinkan operasi write.
+**Solusi:**
+1. Buka Firebase Console > Firestore Database > Rules
+2. Pastikan rules mengizinkan read/write (lihat bagian di atas)
+3. Klik Publish dan tunggu beberapa detik
+4. Refresh halaman admin dan coba lagi
+
+### Error: "Firebase: Error (auth/invalid-api-key)"
+- Pastikan `apiKey` di `firebase-config.js` sudah benar dan tidak ada spasi tambahan.
+
+### Data tidak muncul
+- Cek Console browser (F12 > Console) untuk melihat pesan error spesifik.
+- Pastikan Firestore Security Rules dalam mode Test atau sudah dikonfigurasi dengan benar.
+
+### Upload gambar gagal
+- Pastikan Firebase Storage sudah diaktifkan di Firebase Console
+- Pastikan Storage Rules sudah dikonfigurasi (lihat bagian 6)
+- Cek Console browser untuk melihat error spesifik
+
+### Test Mode Expired (30 hari)
+Jika menggunakan test mode dan sudah lebih dari 30 hari:
+1. Buka Firestore Database > Rules
+2. Rules mungkin sudah otomatis diubah menjadi `allow read, write: if false;`
+3. Update rules sesuai panduan di atas
