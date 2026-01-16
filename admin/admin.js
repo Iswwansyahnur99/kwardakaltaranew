@@ -1133,9 +1133,9 @@
       date,
       location,
       excerpt,
-      content: content.length > 0 ? content : undefined,
-      tags,
-      cover
+      content: content.length > 0 ? content : [],
+      tags: tags || [],
+      cover: cover || ''
     };
 
     try {
@@ -1371,7 +1371,7 @@
       return;
     }
 
-    const albumData = { title, location, year, count, cover };
+    const albumData = { title, location, year, count, cover: cover || '' };
 
     try {
       if (existingIdx !== null) {
