@@ -11,25 +11,54 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+let firebaseApp = null;
+let db = null;
+let auth = null;
+let storage = null;
 
-// Initialize Firestore
-const db = firebase.firestore();
+try {
+  firebaseApp = firebase.initializeApp(firebaseConfig);
+  console.log('Firebase App initialized successfully');
 
-// Initialize Auth
-const auth = firebase.auth();
+  // Initialize Firestore
+  db = firebase.firestore();
+  console.log('Firestore initialized');
 
-// Initialize Storage
-const storage = firebase.storage();
+  // Initialize Auth
+  auth = firebase.auth();
+  console.log('Auth initialized');
+
+  // Initialize Storage with error handling
+  try {
+    storage = firebase.storage();
+    // Test storage connection
+    console.log('Storage initialized with bucket:', firebaseConfig.storageBucket);
+  } catch (storageError) {
+    console.error('Storage initialization failed:', storageError);
+    storage = null;
+  }
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+}
 
 // Export for use in other files
 window.firebaseDB = db;
 window.firebaseAuth = auth;
 window.firebaseStorage = storage;
+window.firebaseConfig = firebaseConfig;
 
 // Helper function to check if Firebase is configured
 window.isFirebaseConfigured = function() {
-  return firebaseConfig.apiKey !== "YOUR_API_KEY";
+  return firebaseConfig.apiKey !== "YOUR_API_KEY" && db !== null;
 };
 
-console.log('Firebase initialized:', window.isFirebaseConfigured() ? 'Configured' : 'Not configured - using localStorage fallback');
+// Helper function to check if Storage is available
+window.isStorageAvailable = function() {
+  return storage !== null;
+};
+
+console.log('Firebase Status:', {
+  configured: window.isFirebaseConfigured(),
+  storageAvailable: window.isStorageAvailable(),
+  storageBucket: firebaseConfig.storageBucket
+});

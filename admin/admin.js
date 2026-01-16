@@ -102,6 +102,16 @@
 
   // ============ Image Upload Functions ============
 
+  // Convert file to base64 data URL (fallback method)
+  function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   // Compress image before upload
   function compressImage(file, maxWidth = 1200, quality = 0.8) {
     return new Promise((resolve, reject) => {
@@ -126,41 +136,62 @@
           ctx.drawImage(img, 0, 0, width, height);
 
           canvas.toBlob(
-            (blob) => resolve(blob),
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to compress image'));
+              }
+            },
             'image/jpeg',
             quality
           );
         };
-        img.onerror = reject;
+        img.onerror = () => reject(new Error('Failed to load image'));
         img.src = e.target.result;
       };
-      reader.onerror = reject;
+      reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsDataURL(file);
     });
   }
 
   // Upload image to Firebase Storage
   async function uploadImageToStorage(file, folder = 'images') {
+    // Check if storage is available
     if (!storage) {
-      showToast('Firebase Storage tidak tersedia', 'error');
-      return null;
+      console.warn('Firebase Storage not available, checking window.firebaseStorage...');
+      if (window.firebaseStorage) {
+        storage = window.firebaseStorage;
+      } else {
+        throw new Error('Firebase Storage tidak tersedia. Pastikan Storage sudah diaktifkan di Firebase Console.');
+      }
     }
 
     try {
+      console.log('Starting image upload...', { fileName: file.name, fileSize: file.size });
+
       // Compress image first
+      showToast('Mengompresi gambar...', 'info');
       const compressedBlob = await compressImage(file);
+      console.log('Image compressed:', { originalSize: file.size, compressedSize: compressedBlob.size });
 
       // Generate unique filename
       const timestamp = Date.now();
       const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const filename = `${folder}/${timestamp}_${safeName}`;
+      console.log('Uploading to:', filename);
 
       // Create storage reference
       const storageRef = storage.ref(filename);
 
       // Upload file with progress tracking
+      showToast('Mengupload gambar...', 'info');
       const uploadTask = storageRef.put(compressedBlob, {
-        contentType: 'image/jpeg'
+        contentType: 'image/jpeg',
+        customMetadata: {
+          'originalName': file.name,
+          'uploadedAt': new Date().toISOString()
+        }
       });
 
       // Return promise that tracks upload progress
@@ -169,16 +200,48 @@
           'state_changed',
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log('Upload progress:', progress.toFixed(1) + '%');
             updateUploadProgress(progress);
           },
           (error) => {
-            console.error('Upload error:', error);
-            reject(error);
+            console.error('Upload error:', error.code, error.message);
+            let errorMessage = 'Gagal upload gambar';
+
+            // Handle specific Firebase Storage errors
+            switch (error.code) {
+              case 'storage/unauthorized':
+                errorMessage = 'Tidak memiliki izin untuk upload. Periksa Firebase Storage Rules.';
+                break;
+              case 'storage/canceled':
+                errorMessage = 'Upload dibatalkan';
+                break;
+              case 'storage/unknown':
+                errorMessage = 'Terjadi kesalahan. Coba lagi.';
+                break;
+              case 'storage/quota-exceeded':
+                errorMessage = 'Kuota penyimpanan habis';
+                break;
+              case 'storage/invalid-checksum':
+                errorMessage = 'File rusak, coba upload ulang';
+                break;
+              case 'storage/retry-limit-exceeded':
+                errorMessage = 'Koneksi bermasalah, coba lagi';
+                break;
+              default:
+                errorMessage = error.message || 'Gagal upload gambar';
+            }
+            reject(new Error(errorMessage));
           },
           async () => {
-            // Get download URL
-            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-            resolve(downloadURL);
+            try {
+              // Get download URL
+              const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+              console.log('Upload complete! URL:', downloadURL);
+              resolve(downloadURL);
+            } catch (urlError) {
+              console.error('Failed to get download URL:', urlError);
+              reject(new Error('Gagal mendapatkan URL gambar'));
+            }
           }
         );
       });
@@ -193,9 +256,10 @@
     if (!storage || !imageUrl) return;
 
     try {
-      // Extract path from URL
-      const baseUrl = 'https://firebasestorage.googleapis.com/v0/b/';
-      if (!imageUrl.includes(baseUrl)) return;
+      // Check if URL is from Firebase Storage
+      if (!imageUrl.includes('firebasestorage.googleapis.com') && !imageUrl.includes('firebasestorage.app')) {
+        return;
+      }
 
       // Create reference from URL and delete
       const imageRef = storage.refFromURL(imageUrl);
@@ -221,34 +285,31 @@
     }
   }
 
-  // Get upload component HTML
+  // Get upload component HTML - always show upload area
   function getUploadComponentHtml(fieldId, currentUrl = '', label = 'Upload Gambar') {
-    const hasStorage = !!storage;
     const previewStyle = currentUrl ? '' : 'display:none';
 
     return `
       <div class="upload-component" id="${fieldId}-component">
         <label class="upload-label">${label}</label>
 
-        ${hasStorage ? `
-          <div class="upload-area" id="${fieldId}-area">
-            <div class="upload-dropzone" id="${fieldId}-dropzone">
-              <div class="upload-icon">📷</div>
-              <div class="upload-text">
-                <span class="upload-main">Klik atau drag gambar ke sini</span>
-                <span class="upload-hint">JPG, PNG, WebP (Max 5MB)</span>
-              </div>
-              <input type="file" id="${fieldId}-file" accept="image/*" class="upload-input">
+        <div class="upload-area" id="${fieldId}-area">
+          <div class="upload-dropzone" id="${fieldId}-dropzone">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">
+              <span class="upload-main">Klik atau drag gambar ke sini</span>
+              <span class="upload-hint">JPG, PNG, WebP (Max 5MB)</span>
             </div>
-
-            <div class="upload-progress" id="${fieldId}-progress" style="display:none">
-              <div class="progress-bar-container">
-                <div class="progress-bar" id="upload-progress-bar"></div>
-              </div>
-              <span class="progress-text" id="upload-progress-text">0%</span>
-            </div>
+            <input type="file" id="${fieldId}-file" accept="image/*" class="upload-input">
           </div>
-        ` : ''}
+
+          <div class="upload-progress" id="${fieldId}-progress" style="display:none">
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="upload-progress-bar"></div>
+            </div>
+            <span class="progress-text" id="upload-progress-text">0%</span>
+          </div>
+        </div>
 
         <div class="upload-preview" id="${fieldId}-preview" style="${previewStyle}">
           <img src="${escapeHtml(currentUrl)}" alt="Preview" id="${fieldId}-preview-img">
@@ -283,7 +344,7 @@
     if (fileInput) {
       fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
-        if (file) await handleFileUpload(file, fieldId);
+        if (file) await handleFileUpload(file);
       });
     }
 
@@ -291,32 +352,38 @@
     if (dropzone) {
       dropzone.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         dropzone.classList.add('dragover');
       });
 
-      dropzone.addEventListener('dragleave', () => {
+      dropzone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         dropzone.classList.remove('dragover');
       });
 
       dropzone.addEventListener('drop', async (e) => {
         e.preventDefault();
+        e.stopPropagation();
         dropzone.classList.remove('dragover');
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith('image/')) {
-          await handleFileUpload(file, fieldId);
+          await handleFileUpload(file);
         } else {
           showToast('File harus berupa gambar', 'error');
         }
       });
 
-      dropzone.addEventListener('click', () => {
+      dropzone.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         fileInput?.click();
       });
     }
 
     // URL input change
     if (urlInput) {
-      urlInput.addEventListener('change', () => {
+      urlInput.addEventListener('input', () => {
         const url = urlInput.value.trim();
         if (url) {
           hiddenInput.value = url;
@@ -331,7 +398,9 @@
 
     // Remove button
     if (removeBtn) {
-      removeBtn.addEventListener('click', () => {
+      removeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         hiddenInput.value = '';
         if (urlInput) urlInput.value = '';
         preview.style.display = 'none';
@@ -339,7 +408,7 @@
     }
 
     // Handle file upload
-    async function handleFileUpload(file, fieldId) {
+    async function handleFileUpload(file) {
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         showToast('Ukuran file maksimal 5MB', 'error');
@@ -352,9 +421,29 @@
         return;
       }
 
+      // Check if Firebase Storage is available
+      const storageAvailable = storage || window.firebaseStorage;
+
+      if (!storageAvailable) {
+        // Fallback: use data URL for preview only
+        showToast('Firebase Storage tidak tersedia. Gunakan URL eksternal.', 'warning');
+        try {
+          const dataUrl = await fileToDataURL(file);
+          previewImg.src = dataUrl;
+          preview.style.display = 'block';
+          // Don't set hidden input - user needs to provide external URL
+        } catch (err) {
+          showToast('Gagal membaca file', 'error');
+        }
+        return;
+      }
+
       try {
         // Show progress
-        if (progressContainer) progressContainer.style.display = 'flex';
+        if (progressContainer) {
+          progressContainer.style.display = 'flex';
+          updateUploadProgress(0);
+        }
 
         const downloadURL = await uploadImageToStorage(file, 'covers');
 
@@ -363,10 +452,11 @@
           if (urlInput) urlInput.value = downloadURL;
           previewImg.src = downloadURL;
           preview.style.display = 'block';
-          showToast('Gambar berhasil diupload', 'success');
+          showToast('Gambar berhasil diupload!', 'success');
         }
       } catch (error) {
-        showToast('Gagal upload gambar: ' + error.message, 'error');
+        console.error('Upload failed:', error);
+        showToast(error.message || 'Gagal upload gambar', 'error');
       } finally {
         if (progressContainer) progressContainer.style.display = 'none';
         if (fileInput) fileInput.value = '';
