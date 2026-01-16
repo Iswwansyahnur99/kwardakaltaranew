@@ -33,16 +33,140 @@
 <main id="main">
   <section>
     <div class="container">
-      <p class="lead">Form pengiriman berita dapat diintegrasikan ke email, Google Form, atau backend sederhana. Untuk saat ini, silakan kirim ke: <strong>humas@kwardakaltara.or.id</strong>.</p>
-      <div class="bunda" style="margin-top:16px">
-        <div class="bunda__photo" aria-hidden="true"></div>
-        <div>
-          <h3 style="margin:0 0 6px">Panduan Singkat</h3>
-          <ul>
-            <li>Judul berita singkat dan jelas.</li>
-            <li>Tanggal, lokasi, dan penyelenggara.</li>
-            <li>Ringkas 2–4 paragraf + 3–5 foto terbaik.</li>
-          </ul>
+      <p class="lead">Kirimkan berita atau rilis kegiatan Pramuka untuk ditinjau oleh tim redaksi sebelum dipublikasikan di website.</p>
+
+      <div class="form-grid">
+        <!-- Form Pengiriman Berita -->
+        <div class="form-section">
+          <form action="https://formspree.io/f/mnjjneqj" method="POST" class="berita-form" id="beritaForm">
+            <div class="form-group">
+              <label for="nama">Nama Pengirim <span class="required">*</span></label>
+              <input type="text" id="nama" name="nama" required placeholder="Nama lengkap Anda">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">Email <span class="required">*</span></label>
+                <input type="email" id="email" name="email" required placeholder="email@contoh.com">
+              </div>
+              <div class="form-group">
+                <label for="whatsapp">No. WhatsApp <span class="required">*</span></label>
+                <input type="tel" id="whatsapp" name="whatsapp" required placeholder="08xxxxxxxxxx">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="instansi">Instansi / Kwartir</label>
+              <input type="text" id="instansi" name="instansi" placeholder="Contoh: Kwarcab Bulungan, Gugus Depan 01.001">
+            </div>
+
+            <div class="form-group">
+              <label for="judul">Judul Berita <span class="required">*</span></label>
+              <input type="text" id="judul" name="judul" required placeholder="Judul berita yang singkat dan jelas">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="tanggal">Tanggal Kegiatan <span class="required">*</span></label>
+                <input type="date" id="tanggal" name="tanggal" required>
+              </div>
+              <div class="form-group">
+                <label for="lokasi">Lokasi Kegiatan <span class="required">*</span></label>
+                <input type="text" id="lokasi" name="lokasi" required placeholder="Kota/Kabupaten">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="kategori">Kategori Berita</label>
+              <select id="kategori" name="kategori">
+                <option value="">-- Pilih Kategori --</option>
+                <option value="kegiatan">Kegiatan/Event</option>
+                <option value="pelatihan">Pelatihan/Kursus</option>
+                <option value="perkemahan">Perkemahan</option>
+                <option value="pengukuhan">Pengukuhan/Pelantikan</option>
+                <option value="sosial">Bakti Sosial</option>
+                <option value="prestasi">Prestasi</option>
+                <option value="lainnya">Lainnya</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="ringkasan">Ringkasan Berita <span class="required">*</span></label>
+              <textarea id="ringkasan" name="ringkasan" rows="3" required placeholder="Ringkasan singkat berita dalam 1-2 kalimat"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="isi">Isi Berita Lengkap <span class="required">*</span></label>
+              <textarea id="isi" name="isi" rows="8" required placeholder="Tuliskan isi berita lengkap (2-4 paragraf). Sertakan informasi: siapa, apa, kapan, di mana, mengapa, dan bagaimana."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="foto">Link Foto/Dokumentasi</label>
+              <input type="url" id="foto" name="foto" placeholder="Link Google Drive / Dropbox berisi foto kegiatan">
+              <small class="form-hint">Upload 3-5 foto terbaik ke Google Drive lalu bagikan linknya di sini</small>
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" name="persetujuan" required>
+                <span>Saya menyetujui berita ini untuk ditinjau dan diedit oleh tim redaksi sebelum dipublikasikan</span>
+              </label>
+            </div>
+
+            <input type="hidden" name="_subject" value="[Kirim Berita] Berita Baru dari Website">
+            <input type="hidden" name="_next" value="https://kwardakaltara.or.id/kirim-berita-sukses.html">
+
+            <button type="submit" class="btn btn--solid submit-btn">
+              <span class="btn-text">Kirim Berita untuk Ditinjau</span>
+              <span class="btn-loading" style="display:none;">Mengirim...</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Panduan Sidebar -->
+        <div class="guide-section">
+          <div class="guide-card">
+            <h3>Panduan Pengiriman Berita</h3>
+            <div class="guide-item">
+              <div class="guide-icon">1</div>
+              <div>
+                <strong>Judul yang Menarik</strong>
+                <p>Buat judul singkat, jelas, dan informatif (maksimal 15 kata)</p>
+              </div>
+            </div>
+            <div class="guide-item">
+              <div class="guide-icon">2</div>
+              <div>
+                <strong>Informasi Lengkap</strong>
+                <p>Sertakan: tanggal, lokasi, penyelenggara, dan jumlah peserta</p>
+              </div>
+            </div>
+            <div class="guide-item">
+              <div class="guide-icon">3</div>
+              <div>
+                <strong>Isi Berita</strong>
+                <p>Tulis 2-4 paragraf dengan gaya bahasa jurnalistik</p>
+              </div>
+            </div>
+            <div class="guide-item">
+              <div class="guide-icon">4</div>
+              <div>
+                <strong>Dokumentasi Foto</strong>
+                <p>Sertakan 3-5 foto terbaik dengan resolusi tinggi</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h4>Proses Review</h4>
+            <p>Setelah dikirim, berita akan ditinjau oleh tim redaksi dalam waktu 1-3 hari kerja. Anda akan dihubungi via WhatsApp/Email jika ada revisi yang diperlukan.</p>
+          </div>
+
+          <div class="info-card info-card--contact">
+            <h4>Butuh Bantuan?</h4>
+            <p>Hubungi tim Humas:</p>
+            <p><strong>humas@kwardakaltara.or.id</strong></p>
+          </div>
         </div>
       </div>
     </div>

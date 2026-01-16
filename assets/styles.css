@@ -176,3 +176,59 @@ li{ text-align:justify; text-justify:inter-word; hyphens:auto }
 .btn{padding:14px 22px}
 .hero:before{content:"";position:absolute;inset:0;background:radial-gradient(600px 280px at 10% 10%, rgba(77,168,218,.15), transparent 60%);pointer-events:none}
 .text-gradient{background:linear-gradient(90deg,var(--blue-dark),#0b3f66 40%, var(--blue-light) 70%, var(--gold) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ===== Form Kirim Berita ===== */
+.form-grid{display:grid;grid-template-columns:1.4fr .6fr;gap:32px;margin-top:24px}
+.form-section{background:#fff;border-radius:var(--radius);padding:28px;box-shadow:var(--shadow)}
+.berita-form{display:flex;flex-direction:column;gap:18px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-weight:600;font-size:14px;color:var(--ink)}
+.form-group .required{color:var(--red)}
+.form-group input,.form-group select,.form-group textarea{padding:12px 14px;border:1.5px solid #e1e8f0;border-radius:10px;font-size:15px;font-family:inherit;transition:border-color .2s,box-shadow .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--blue-light);box-shadow:0 0 0 3px rgba(77,168,218,.15)}
+.form-group input::placeholder,.form-group textarea::placeholder{color:#9ca3af}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-group select{background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 14px center;appearance:none;padding-right:36px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-hint{font-size:12px;color:var(--gray);margin-top:4px}
+.checkbox-group{margin-top:8px}
+.checkbox-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px;line-height:1.5}
+.checkbox-label input[type="checkbox"]{width:18px;height:18px;margin-top:2px;accent-color:var(--blue-dark)}
+.submit-btn{width:100%;padding:16px 24px;font-size:16px;margin-top:8px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(10,58,93,.18)}
+.submit-btn:active{transform:translateY(0)}
+
+/* Guide Section */
+.guide-section{display:flex;flex-direction:column;gap:16px}
+.guide-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.guide-card h3{font-family:Poppins,Inter,sans-serif;font-size:18px;margin:0 0 16px;color:var(--blue-dark)}
+.guide-item{display:flex;gap:12px;margin-bottom:14px}
+.guide-item:last-child{margin-bottom:0}
+.guide-icon{min-width:28px;height:28px;background:var(--blue-dark);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.guide-item strong{display:block;font-size:14px;margin-bottom:2px}
+.guide-item p{margin:0;font-size:13px;color:var(--gray);text-align:left}
+.info-card{background:#f0f7ff;border-radius:14px;padding:16px;border-left:4px solid var(--blue-light)}
+.info-card h4{margin:0 0 8px;font-size:15px;color:var(--blue-dark)}
+.info-card p{margin:0;font-size:13px;color:#4a5568}
+.info-card--contact{background:#fff7ed;border-left-color:var(--gold)}
+.info-card--contact h4{color:#92400e}
+
+/* Success Page */
+.success-container{text-align:center;padding:60px 20px;max-width:600px;margin:0 auto}
+.success-icon{width:80px;height:80px;background:linear-gradient(135deg,#10b981,#34d399);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 10px 30px rgba(16,185,129,.25)}
+.success-icon svg{width:40px;height:40px;color:#fff}
+.success-container h2{font-family:Poppins,Inter,sans-serif;font-size:28px;margin:0 0 12px;color:var(--blue-dark)}
+.success-container p{color:var(--gray);margin:0 0 24px}
+.success-info{background:#f0fdf4;border-radius:14px;padding:20px;text-align:left;margin-bottom:24px}
+.success-info h4{margin:0 0 10px;color:#166534}
+.success-info ul{margin:0;padding-left:20px}
+.success-info li{margin-bottom:6px;color:#4a5568}
+
+@media (max-width:980px){
+  .form-grid{grid-template-columns:1fr}
+  .guide-section{order:-1}
+}
+@media (max-width:580px){
+  .form-row{grid-template-columns:1fr}
+  .form-section{padding:20px}
+}
