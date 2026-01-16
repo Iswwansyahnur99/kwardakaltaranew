@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard — Pramuka Kaltara</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">
+          <img src="../assets/logo-kaltara.png" alt="Logo" onerror="this.style.display='none'">
+        </div>
+        <h1>Admin Dashboard</h1>
+        <p>Pramuka Kaltara CMS</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required placeholder="Masukkan username" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required placeholder="Masukkan password" autocomplete="current-password">
+        </div>
+        <div id="login-error" class="error-message" style="display:none"></div>
+        <button type="submit" class="btn btn--primary btn--full">
+          <span class="btn-text">Masuk</span>
+        </button>
+      </form>
+      <div class="login-hint">
+        <small>Default: admin / admin123</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="dashboard" style="display:none">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__header">
+        <img src="../assets/logo-kaltara.png" alt="Logo" class="sidebar__logo" onerror="this.style.display='none'">
+        <span class="sidebar__title">Admin CMS</span>
+      </div>
+      <nav class="sidebar__nav">
+        <a href="#" class="nav-item active" data-section="overview">
+          <span class="nav-icon">📊</span> Overview
+        </a>
+        <a href="#" class="nav-item" data-section="posts">
+          <span class="nav-icon">📰</span> Berita
+        </a>
+        <a href="#" class="nav-item" data-section="events">
+          <span class="nav-icon">📅</span> Agenda
+        </a>
+        <a href="#" class="nav-item" data-section="albums">
+          <span class="nav-icon">🖼️</span> Galeri
+        </a>
+        <a href="#" class="nav-item" data-section="settings">
+          <span class="nav-icon">⚙️</span> Pengaturan
+        </a>
+      </nav>
+      <div class="sidebar__footer">
+        <button id="logout-btn" class="btn btn--ghost btn--full">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="content-header">
+        <div class="header-left">
+          <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+          <h1 id="page-title">Overview</h1>
+        </div>
+        <div class="header-right">
+          <span class="user-info">Admin</span>
+        </div>
+      </header>
+
+      <!-- Content Sections -->
+      <div class="content-body">
+        <!-- Overview Section -->
+        <section id="section-overview" class="section active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">📰</div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-posts">0</div>
+                <div class="stat-label">Total Berita</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📅</div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-events">0</div>
+                <div class="stat-label">Total Agenda</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🖼️</div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-albums">0</div>
+                <div class="stat-label">Total Album</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📥</div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-downloads">0</div>
+                <div class="stat-label">Total Download</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card__header">
+              <h3>Berita Terbaru</h3>
+              <a href="#" class="btn btn--small" data-section="posts">Lihat Semua</a>
+            </div>
+            <div class="card__body">
+              <div id="recent-posts" class="recent-list"></div>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button id="export-data" class="btn btn--primary">
+              <span>📤</span> Export Data (JSON)
+            </button>
+            <label class="btn btn--secondary">
+              <span>📥</span> Import Data
+              <input type="file" id="import-data" accept=".json" style="display:none">
+            </label>
+          </div>
+        </section>
+
+        <!-- Posts Section -->
+        <section id="section-posts" class="section">
+          <div class="section-header">
+            <h2>Kelola Berita</h2>
+            <button id="add-post-btn" class="btn btn--primary">+ Tambah Berita</button>
+          </div>
+
+          <div class="filters-row">
+            <input type="text" id="search-posts" placeholder="Cari berita..." class="input-search">
+            <select id="filter-category" class="input-select">
+              <option value="">Semua Kategori</option>
+              <option value="Kegiatan">Kegiatan</option>
+              <option value="Pelatihan">Pelatihan</option>
+              <option value="Pengabdian">Pengabdian</option>
+              <option value="Prestasi">Prestasi</option>
+              <option value="Komunitas">Komunitas</option>
+            </select>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Judul</th>
+                  <th>Kategori</th>
+                  <th>Lokasi</th>
+                  <th>Tanggal</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="posts-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Events Section -->
+        <section id="section-events" class="section">
+          <div class="section-header">
+            <h2>Kelola Agenda</h2>
+            <button id="add-event-btn" class="btn btn--primary">+ Tambah Agenda</button>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Judul</th>
+                  <th>Lokasi</th>
+                  <th>Tanggal</th>
+                  <th>Penyelenggara</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="events-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Albums Section -->
+        <section id="section-albums" class="section">
+          <div class="section-header">
+            <h2>Kelola Galeri</h2>
+            <button id="add-album-btn" class="btn btn--primary">+ Tambah Album</button>
+          </div>
+
+          <div class="albums-grid" id="albums-grid"></div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="section-settings" class="section">
+          <div class="card">
+            <div class="card__header">
+              <h3>Pengaturan Akun</h3>
+            </div>
+            <div class="card__body">
+              <form id="settings-form" class="settings-form">
+                <div class="form-group">
+                  <label for="new-username">Username Baru</label>
+                  <input type="text" id="new-username" placeholder="Username baru">
+                </div>
+                <div class="form-group">
+                  <label for="new-password">Password Baru</label>
+                  <input type="password" id="new-password" placeholder="Password baru">
+                </div>
+                <div class="form-group">
+                  <label for="confirm-password">Konfirmasi Password</label>
+                  <input type="password" id="confirm-password" placeholder="Ulangi password baru">
+                </div>
+                <button type="submit" class="btn btn--primary">Simpan Pengaturan</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card__header">
+              <h3>Reset Data</h3>
+            </div>
+            <div class="card__body">
+              <p style="margin-bottom:16px;color:#666">Reset semua data ke default. Tindakan ini tidak dapat dibatalkan!</p>
+              <button id="reset-data" class="btn btn--danger">Reset ke Default</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal__content">
+      <div class="modal__header">
+        <h3 id="modal-title">Modal Title</h3>
+        <button class="modal__close">&times;</button>
+      </div>
+      <div class="modal__body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="../assets/data.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

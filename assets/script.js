@@ -119,8 +119,19 @@
     }
   });
 
-  // Page renderers
-  const DATA = window.APP_DATA || {};
+  // Page renderers - Load from localStorage if available (synced with admin CMS)
+  function loadCMSData() {
+    const stored = localStorage.getItem('cms_data');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error('Failed to parse CMS data:', e);
+      }
+    }
+    return window.APP_DATA || {};
+  }
+  const DATA = loadCMSData();
 
   function renderPosts(listEl, searchEl, tagSel){
     if (!listEl) return;
