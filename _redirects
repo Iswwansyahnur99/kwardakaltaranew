@@ -1,0 +1,2 @@
+# Clean URLs untuk berita
+/berita/*  /berita/index.html  200
