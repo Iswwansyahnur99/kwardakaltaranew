@@ -491,7 +491,14 @@
         console.log('Data loaded from Firebase');
       } catch (error) {
         console.error('Failed to load from Firebase:', error);
-        showToast('Gagal memuat data dari server', 'error');
+
+        // Check if permission error - switch to localStorage mode
+        if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+          console.warn('Firebase permission denied. Switching to localStorage mode.');
+          useFirebase = false;
+          showToast('Mode offline: Menggunakan penyimpanan lokal', 'warning');
+        }
+
         loadFromLocalStorage();
       }
     } else {
@@ -688,7 +695,11 @@
 
   // Seed initial data to Firebase
   async function seedFirebaseData() {
-    if (!useFirebase || !window.APP_DATA) return;
+    // Skip seeding if not using Firebase or no APP_DATA
+    if (!useFirebase || !window.APP_DATA) {
+      console.log('Skipping Firebase seeding - using localStorage mode');
+      return;
+    }
 
     try {
       // Check if data already exists
@@ -700,19 +711,22 @@
 
       console.log('Seeding initial data to Firebase...');
 
-      // Seed posts
+      // Seed posts - clean data before sending
       for (const post of window.APP_DATA.posts || []) {
-        await db.collection(COLLECTIONS.POSTS).add(post);
+        const cleanPost = cleanDataForFirestore(post);
+        await db.collection(COLLECTIONS.POSTS).add(cleanPost);
       }
 
-      // Seed events
+      // Seed events - clean data before sending
       for (const event of window.APP_DATA.events || []) {
-        await db.collection(COLLECTIONS.EVENTS).add(event);
+        const cleanEvent = cleanDataForFirestore(event);
+        await db.collection(COLLECTIONS.EVENTS).add(cleanEvent);
       }
 
-      // Seed albums
+      // Seed albums - clean data before sending
       for (const album of window.APP_DATA.albums || []) {
-        await db.collection(COLLECTIONS.ALBUMS).add(album);
+        const cleanAlbum = cleanDataForFirestore(album);
+        await db.collection(COLLECTIONS.ALBUMS).add(cleanAlbum);
       }
 
       console.log('Firebase data seeding complete');
@@ -723,7 +737,33 @@
       renderAll();
     } catch (error) {
       console.error('Failed to seed Firebase:', error);
+
+      // If permission denied, switch to localStorage mode silently
+      if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+        console.warn('Firebase seeding failed due to permissions. Using localStorage.');
+        useFirebase = false;
+      }
     }
+  }
+
+  // Helper function to clean data for Firestore (remove undefined values)
+  function cleanDataForFirestore(obj) {
+    const cleaned = {};
+    for (const key in obj) {
+      if (obj[key] !== undefined) {
+        cleaned[key] = obj[key];
+      } else {
+        // Replace undefined with appropriate default
+        if (Array.isArray(obj[key])) {
+          cleaned[key] = [];
+        } else if (typeof obj[key] === 'string') {
+          cleaned[key] = '';
+        } else {
+          cleaned[key] = null;
+        }
+      }
+    }
+    return cleaned;
   }
 
   function resetToDefault() {
@@ -1144,7 +1184,13 @@
         const idx = currentData.posts.findIndex(p => p.slug === existingSlug);
         if (idx !== -1) {
           currentData.posts[idx] = postData;
-          if (useFirebase) await firebaseUpdatePost(existingSlug, postData);
+          if (useFirebase) {
+            try {
+              await firebaseUpdatePost(existingSlug, postData);
+            } catch (fbError) {
+              console.warn('Firebase update failed, saved locally:', fbError);
+            }
+          }
         }
       } else {
         // Check for duplicate slug
@@ -1152,7 +1198,13 @@
           postData.slug = slug + '-' + Date.now();
         }
         currentData.posts.unshift(postData);
-        if (useFirebase) await firebaseAddPost(postData);
+        if (useFirebase) {
+          try {
+            await firebaseAddPost(postData);
+          } catch (fbError) {
+            console.warn('Firebase add failed, saved locally:', fbError);
+          }
+        }
       }
 
       saveData();
@@ -1160,6 +1212,7 @@
       renderAll();
       showToast(existingSlug ? 'Berita berhasil diperbarui' : 'Berita berhasil ditambahkan', 'success');
     } catch (error) {
+      console.error('Save post error:', error);
       showToast('Gagal menyimpan: ' + error.message, 'error');
     }
   }
@@ -1174,12 +1227,19 @@
   async function deletePost(slug) {
     if (confirm('Yakin ingin menghapus berita ini?')) {
       try {
-        if (useFirebase) await firebaseDeletePost(slug);
+        if (useFirebase) {
+          try {
+            await firebaseDeletePost(slug);
+          } catch (fbError) {
+            console.warn('Firebase delete post failed, deleted locally:', fbError);
+          }
+        }
         currentData.posts = currentData.posts.filter(p => p.slug !== slug);
         saveData();
         renderAll();
         showToast('Berita berhasil dihapus', 'success');
       } catch (error) {
+        console.error('Delete post error:', error);
         showToast('Gagal menghapus: ' + error.message, 'error');
       }
     }
@@ -1263,12 +1323,20 @@
         const existingEvent = currentData.events[existingIdx];
         currentData.events[existingIdx] = eventData;
         if (useFirebase && existingEvent.id) {
-          await firebaseUpdateEvent(existingEvent.id, eventData);
+          try {
+            await firebaseUpdateEvent(existingEvent.id, eventData);
+          } catch (fbError) {
+            console.warn('Firebase update event failed, saved locally:', fbError);
+          }
         }
       } else {
         if (useFirebase) {
-          const id = await firebaseAddEvent(eventData);
-          eventData.id = id;
+          try {
+            const id = await firebaseAddEvent(eventData);
+            eventData.id = id;
+          } catch (fbError) {
+            console.warn('Firebase add event failed, saved locally:', fbError);
+          }
         }
         currentData.events.unshift(eventData);
       }
@@ -1278,6 +1346,7 @@
       renderAll();
       showToast(existingIdx !== null ? 'Agenda berhasil diperbarui' : 'Agenda berhasil ditambahkan', 'success');
     } catch (error) {
+      console.error('Save event error:', error);
       showToast('Gagal menyimpan: ' + error.message, 'error');
     }
   }
@@ -1294,13 +1363,18 @@
       try {
         const event = currentData.events[idx];
         if (useFirebase && event.id) {
-          await firebaseDeleteEvent(event.id);
+          try {
+            await firebaseDeleteEvent(event.id);
+          } catch (fbError) {
+            console.warn('Firebase delete event failed, deleted locally:', fbError);
+          }
         }
         currentData.events.splice(idx, 1);
         saveData();
         renderAll();
         showToast('Agenda berhasil dihapus', 'success');
       } catch (error) {
+        console.error('Delete event error:', error);
         showToast('Gagal menghapus: ' + error.message, 'error');
       }
     }
@@ -1378,12 +1452,20 @@
         const existingAlbum = currentData.albums[existingIdx];
         currentData.albums[existingIdx] = albumData;
         if (useFirebase && existingAlbum.id) {
-          await firebaseUpdateAlbum(existingAlbum.id, albumData);
+          try {
+            await firebaseUpdateAlbum(existingAlbum.id, albumData);
+          } catch (fbError) {
+            console.warn('Firebase update album failed, saved locally:', fbError);
+          }
         }
       } else {
         if (useFirebase) {
-          const id = await firebaseAddAlbum(albumData);
-          albumData.id = id;
+          try {
+            const id = await firebaseAddAlbum(albumData);
+            albumData.id = id;
+          } catch (fbError) {
+            console.warn('Firebase add album failed, saved locally:', fbError);
+          }
         }
         currentData.albums.unshift(albumData);
       }
@@ -1393,6 +1475,7 @@
       renderAll();
       showToast(existingIdx !== null ? 'Album berhasil diperbarui' : 'Album berhasil ditambahkan', 'success');
     } catch (error) {
+      console.error('Save album error:', error);
       showToast('Gagal menyimpan: ' + error.message, 'error');
     }
   }
@@ -1409,13 +1492,18 @@
       try {
         const album = currentData.albums[idx];
         if (useFirebase && album.id) {
-          await firebaseDeleteAlbum(album.id);
+          try {
+            await firebaseDeleteAlbum(album.id);
+          } catch (fbError) {
+            console.warn('Firebase delete album failed, deleted locally:', fbError);
+          }
         }
         currentData.albums.splice(idx, 1);
         saveData();
         renderAll();
         showToast('Album berhasil dihapus', 'success');
       } catch (error) {
+        console.error('Delete album error:', error);
         showToast('Gagal menghapus: ' + error.message, 'error');
       }
     }
