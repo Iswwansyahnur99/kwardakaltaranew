@@ -1,13 +1,16 @@
 // Firebase Configuration for Pramuka Kaltara CMS
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCR4ASGnVYgSGmNhV9SS0jvLvY1UeMXx4Q",
-  authDomain: "pramuka-kaltara.firebaseapp.com",
-  projectId: "pramuka-kaltara",
-  storageBucket: "pramuka-kaltara.firebasestorage.app",
-  messagingSenderId: "150809477900",
-  appId: "1:150809477900:web:54bcc354a87c097df67f29",
-  measurementId: "G-TCPERMJ2P4"
+  // !!! IMPORTANT !!!
+  // Replace this with your own Firebase configuration from the Firebase console.
+  // This is a placeholder and will not work.
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 };
 
 // Initialize Firebase

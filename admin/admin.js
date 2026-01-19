@@ -67,10 +67,18 @@
 
   // ============ Utilities ============
   function showToast(message, type = 'success') {
+    const container = document.body;
+    const toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = `toast ${type} show`;
     toast.textContent = message;
-    toast.className = 'toast ' + type;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        container.removeChild(toast);
+      }, 300);
+    }, 3000);
   }
 
   function generateSlug(title) {

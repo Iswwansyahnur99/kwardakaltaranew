@@ -6,9 +6,28 @@
   const y = document.getElementById('year'); if (y) y.textContent = new Date().getFullYear();
 
   // Utilities
-  const $ = (sel,root=document)=>root.querySelector(sel);
-  const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
-
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  
+  // A tiny template literal utility
+  const html = (strings, ...values) => strings.raw[0].split('\n').map(line => line.trim()).join('');
+  
+  // Toast notification
+  function showToast(message, type = 'info') {
+    const container = $('#toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${type}`;
+    toast.innerHTML = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('toast--visible');
+      setTimeout(() => {
+        toast.classList.remove('toast--visible');
+        toast.addEventListener('transitionend', () => toast.remove());
+      }, 4000);
+    }, 10);
+  }
   // Build/ensure new menu structure if missing (for legacy pages)
   function ensureMenu(){
     const navWrap = $('.nav');
@@ -149,7 +168,7 @@
         const el = document.createElement('article');
         el.className = 'card';
         el.setAttribute('role','listitem');
-        el.innerHTML = `
+        el.innerHTML = html`
           <div class="card__media">
             <span class="label tag">${p.category}</span>
           </div>
@@ -177,7 +196,7 @@
       const el = document.createElement('a');
       el.href = '#';
       el.className = 'card';
-      el.innerHTML = `
+      el.innerHTML = html`
         <div class="card__media album__cover" role="img" aria-label="Album ${a.title}"></div>
         <div class="card__body">
           <h3 class="card__title">${a.title}</h3>
@@ -204,7 +223,7 @@
       const d = new Date(ev.date);
       const el = document.createElement('div');
       el.className = 'agenda__item' + (type==='past' ? ' agenda__item--past' : '');
-      el.innerHTML = `
+      el.innerHTML = html`
         <div class="agenda__date" aria-label="Tanggal kegiatan">
           <div class="d">${d.getDate().toString().padStart(2,'0')}</div>
           <div>${d.toLocaleString('id-ID',{month:'short'})}</div>
@@ -229,7 +248,7 @@
       .filter(d => (!q || (d.title+" "+d.desc+" "+d.category).toLowerCase().includes(q)) && (!cat || d.category===cat))
       .forEach(d=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `
+        tr.innerHTML = html`
           <td>${d.title}</td>
           <td>${d.category}</td>
           <td>${d.desc}</td>
@@ -264,7 +283,7 @@
       .forEach(d=>{
         const label = d.type==='berkala'?'Berkala':(d.type==='setiap_saat'?'Setiap Saat':'Serta Merta');
         const tr = document.createElement('tr');
-        tr.innerHTML = `
+        tr.innerHTML = html`
           <td>${d.title}</td>
           <td>${d.number || '-'} / ${d.year}</td>
           <td>${label}</td>
@@ -371,16 +390,9 @@
 
   // Check for success message on kontak page
   if (window.location.search.includes('sent=1')) {
-    const container = document.querySelector('.grid.cols-2');
-    if (container) {
-      const successMsg = document.createElement('div');
-      successMsg.className = 'success-message';
-      successMsg.innerHTML = '<strong>Pesan Terkirim!</strong> Terima kasih telah menghubungi kami. Kami akan segera merespons pesan Anda.';
-      container.parentElement.insertBefore(successMsg, container);
-
-      // Clean URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    showToast('<strong>Pesan Terkirim!</strong> Terima kasih telah menghubungi kami.', 'success');
+    // Clean URL
+    window.history.replaceState({}, document.title, window.location.pathname);
   }
 
   // Smooth scroll for anchor links
