@@ -158,7 +158,7 @@
             <div class="meta">${p.location} • ${new Date(p.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
             <p>${p.excerpt}</p>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-            <div style="margin-top:10px"><a class="btn" href="berita/${encodeURIComponent(p.slug)}">Baca berita</a></div>
+            <div style="margin-top:10px"><a class="btn" href="berita-detail.html?slug=${encodeURIComponent(p.slug)}">Baca berita</a></div>
           </div>`;
         listEl.appendChild(el);
       });
