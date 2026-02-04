@@ -24,6 +24,8 @@
     POSTS: 'posts',
     EVENTS: 'events',
     ALBUMS: 'albums',
+    DOWNLOADS: 'downloads',
+    PPID: 'ppid',
     SETTINGS: 'settings'
   };
 
@@ -494,6 +496,16 @@
           currentData.albums.push({ id: doc.id, ...doc.data() });
         });
 
+        const downloadsSnapshot = await db.collection(COLLECTIONS.DOWNLOADS).get();
+        downloadsSnapshot.forEach(doc => {
+          currentData.downloads.push({ id: doc.id, ...doc.data() });
+        });
+
+        const ppidSnapshot = await db.collection(COLLECTIONS.PPID).get();
+        ppidSnapshot.forEach(doc => {
+          currentData.ppid.push({ id: doc.id, ...doc.data() });
+        });
+
         // Also save to localStorage for frontend sync
         localStorage.setItem(STORAGE_KEYS.DATA, JSON.stringify(currentData));
         console.log('Data loaded from Firebase');
@@ -701,6 +713,74 @@
     }
   }
 
+  async function firebaseAddDownload(downloadData) {
+    if (!useFirebase) return null;
+    try {
+      console.log('Firebase: Adding download...', downloadData.title);
+      const docRef = await db.collection(COLLECTIONS.DOWNLOADS).add(downloadData);
+      console.log('Firebase: Download added with ID:', docRef.id);
+      return docRef.id;
+    } catch (error) {
+      throw handleFirebaseError(error, 'add download');
+    }
+  }
+
+  async function firebaseUpdateDownload(id, downloadData) {
+    if (!useFirebase) return;
+    try {
+      console.log('Firebase: Updating download...', id);
+      await db.collection(COLLECTIONS.DOWNLOADS).doc(id).update(downloadData);
+      console.log('Firebase: Download updated');
+    } catch (error) {
+      throw handleFirebaseError(error, 'update download');
+    }
+  }
+
+  async function firebaseDeleteDownload(id) {
+    if (!useFirebase) return;
+    try {
+      console.log('Firebase: Deleting download...', id);
+      await db.collection(COLLECTIONS.DOWNLOADS).doc(id).delete();
+      console.log('Firebase: Download deleted');
+    } catch (error) {
+      throw handleFirebaseError(error, 'delete download');
+    }
+  }
+
+  async function firebaseAddPPID(ppidData) {
+    if (!useFirebase) return null;
+    try {
+      console.log('Firebase: Adding PPID...', ppidData.title);
+      const docRef = await db.collection(COLLECTIONS.PPID).add(ppidData);
+      console.log('Firebase: PPID added with ID:', docRef.id);
+      return docRef.id;
+    } catch (error) {
+      throw handleFirebaseError(error, 'add PPID');
+    }
+  }
+
+  async function firebaseUpdatePPID(id, ppidData) {
+    if (!useFirebase) return;
+    try {
+      console.log('Firebase: Updating PPID...', id);
+      await db.collection(COLLECTIONS.PPID).doc(id).update(ppidData);
+      console.log('Firebase: PPID updated');
+    } catch (error) {
+      throw handleFirebaseError(error, 'update PPID');
+    }
+  }
+
+  async function firebaseDeletePPID(id) {
+    if (!useFirebase) return;
+    try {
+      console.log('Firebase: Deleting PPID...', id);
+      await db.collection(COLLECTIONS.PPID).doc(id).delete();
+      console.log('Firebase: PPID deleted');
+    } catch (error) {
+      throw handleFirebaseError(error, 'delete PPID');
+    }
+  }
+
   // Seed initial data to Firebase
   async function seedFirebaseData() {
     // Skip seeding if not using Firebase or no APP_DATA
@@ -735,6 +815,18 @@
       for (const album of window.APP_DATA.albums || []) {
         const cleanAlbum = cleanDataForFirestore(album);
         await db.collection(COLLECTIONS.ALBUMS).add(cleanAlbum);
+      }
+
+      // Seed downloads - clean data before sending
+      for (const download of window.APP_DATA.downloads || []) {
+        const cleanDownload = cleanDataForFirestore(download);
+        await db.collection(COLLECTIONS.DOWNLOADS).add(cleanDownload);
+      }
+
+      // Seed ppid - clean data before sending
+      for (const ppid of window.APP_DATA.ppid || []) {
+        const cleanPPID = cleanDataForFirestore(ppid);
+        await db.collection(COLLECTIONS.PPID).add(cleanPPID);
       }
 
       console.log('Firebase data seeding complete');
@@ -802,6 +894,9 @@
       try {
         const imported = JSON.parse(e.target.result);
         if (imported.posts && imported.events && imported.albums) {
+          // Ensure downloads and ppid arrays exist
+          if (!imported.downloads) imported.downloads = [];
+          if (!imported.ppid) imported.ppid = [];
           currentData = imported;
           saveToLocalStorage();
 
@@ -822,6 +917,12 @@
             const albumsSnapshot = await db.collection(COLLECTIONS.ALBUMS).get();
             albumsSnapshot.forEach(doc => batch.delete(doc.ref));
 
+            const downloadsSnapshot = await db.collection(COLLECTIONS.DOWNLOADS).get();
+            downloadsSnapshot.forEach(doc => batch.delete(doc.ref));
+
+            const ppidSnapshot = await db.collection(COLLECTIONS.PPID).get();
+            ppidSnapshot.forEach(doc => batch.delete(doc.ref));
+
             await batch.commit();
 
             // Add new data
@@ -833,6 +934,12 @@
             }
             for (const album of imported.albums) {
               await db.collection(COLLECTIONS.ALBUMS).add(album);
+            }
+            for (const download of imported.downloads || []) {
+              await db.collection(COLLECTIONS.DOWNLOADS).add(download);
+            }
+            for (const ppid of imported.ppid || []) {
+              await db.collection(COLLECTIONS.PPID).add(ppid);
             }
           }
 
@@ -919,6 +1026,8 @@
       posts: 'Kelola Berita',
       events: 'Kelola Agenda',
       albums: 'Kelola Galeri',
+      downloads: 'Kelola Download',
+      ppid: 'Kelola PPID',
       settings: 'Pengaturan'
     };
     $('#page-title').textContent = titles[sectionId] || 'Dashboard';
@@ -934,6 +1043,8 @@
     renderPostsTable();
     renderEventsTable();
     renderAlbumsGrid();
+    renderDownloadsTable();
+    renderPPIDTable();
     renderFirebaseStatus();
   }
 
@@ -1517,6 +1628,398 @@
     }
   }
 
+  // ============ Render: Downloads ============
+  function renderDownloadsTable() {
+    const tbody = $('#downloads-table');
+    if (!tbody) return;
+
+    const searchVal = ($('#search-downloads')?.value || '').toLowerCase();
+    const categoryVal = $('#filter-download-category')?.value || '';
+
+    let downloads = (currentData.downloads || []).slice();
+
+    // Filter
+    if (searchVal) {
+      downloads = downloads.filter(d =>
+        d.title.toLowerCase().includes(searchVal) ||
+        d.desc.toLowerCase().includes(searchVal)
+      );
+    }
+    if (categoryVal) {
+      downloads = downloads.filter(d => d.category === categoryVal);
+    }
+
+    // Sort by updated date
+    downloads.sort((a, b) => new Date(b.updated) - new Date(a.updated));
+
+    if (downloads.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-500)">Tidak ada dokumen</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = downloads.map((download) => {
+      // Find original index in currentData.downloads
+      const originalIdx = currentData.downloads.findIndex(d => 
+        d === download || (d.title === download.title && d.file === download.file)
+      );
+      return `
+      <tr>
+        <td><strong>${escapeHtml(download.title)}</strong></td>
+        <td>${escapeHtml(download.category || '-')}</td>
+        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(download.desc || '-')}</td>
+        <td><a href="${escapeHtml(download.file || '#')}" target="_blank" style="color:var(--primary)">${download.file ? '📄 File' : '-'}</a></td>
+        <td>${formatDate(download.updated)}</td>
+        <td class="actions">
+          <button class="btn btn--secondary btn--icon" onclick="AdminCMS.editDownload(${originalIdx})" title="Edit">✏️</button>
+          <button class="btn btn--danger btn--icon" onclick="AdminCMS.deleteDownload(${originalIdx})" title="Hapus">🗑️</button>
+        </td>
+      </tr>
+    `;
+    }).join('');
+  }
+
+  // ============ Render: PPID ============
+  function renderPPIDTable() {
+    const tbody = $('#ppid-table');
+    if (!tbody) return;
+
+    const searchVal = ($('#search-ppid')?.value || '').toLowerCase();
+    const typeVal = $('#filter-ppid-type')?.value || '';
+
+    let ppid = (currentData.ppid || []).slice();
+
+    // Filter
+    if (searchVal) {
+      ppid = ppid.filter(p =>
+        p.title.toLowerCase().includes(searchVal) ||
+        p.number.toLowerCase().includes(searchVal)
+      );
+    }
+    if (typeVal) {
+      ppid = ppid.filter(p => p.type === typeVal);
+    }
+
+    // Sort by published date
+    ppid.sort((a, b) => new Date(b.published) - new Date(a.published));
+
+    if (ppid.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-500)">Tidak ada dokumen PPID</td></tr>';
+      return;
+    }
+
+    const typeLabels = {
+      berkala: 'Berkala',
+      setiap_saat: 'Setiap Saat',
+      serta_merta: 'Serta Merta'
+    };
+
+    tbody.innerHTML = ppid.map((doc) => {
+      // Find original index in currentData.ppid
+      const originalIdx = currentData.ppid.findIndex(p => 
+        p === doc || (p.title === doc.title && p.number === doc.number && p.year === doc.year)
+      );
+      return `
+      <tr>
+        <td><strong>${escapeHtml(doc.title)}</strong></td>
+        <td>${escapeHtml(doc.number || '-')}</td>
+        <td>${doc.year || '-'}</td>
+        <td>${typeLabels[doc.type] || doc.type}</td>
+        <td>${escapeHtml(doc.unit || '-')}</td>
+        <td>${formatDate(doc.published)}</td>
+        <td class="actions">
+          <button class="btn btn--secondary btn--icon" onclick="AdminCMS.editPPID(${originalIdx})" title="Edit">✏️</button>
+          <button class="btn btn--danger btn--icon" onclick="AdminCMS.deletePPID(${originalIdx})" title="Hapus">🗑️</button>
+        </td>
+      </tr>
+    `;
+    }).join('');
+  }
+
+  // ============ CRUD: Downloads ============
+  function getDownloadFormHtml(download = null) {
+    const isEdit = !!download;
+
+    return `
+      <form id="download-form">
+        <div class="form-group">
+          <label for="download-title">Judul Dokumen *</label>
+          <input type="text" id="download-title" required value="${escapeHtml(download?.title || '')}" placeholder="Nama dokumen">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="download-category">Kategori *</label>
+            <select id="download-category" required>
+              <option value="">Pilih Kategori</option>
+              <option value="Pendaftaran" ${download?.category === 'Pendaftaran' ? 'selected' : ''}>Pendaftaran</option>
+              <option value="SOP" ${download?.category === 'SOP' ? 'selected' : ''}>SOP</option>
+              <option value="Pedoman" ${download?.category === 'Pedoman' ? 'selected' : ''}>Pedoman</option>
+              <option value="Template" ${download?.category === 'Template' ? 'selected' : ''}>Template</option>
+              <option value="Surat" ${download?.category === 'Surat' ? 'selected' : ''}>Surat</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="download-updated">Tanggal Update *</label>
+            <input type="date" id="download-updated" required value="${download?.updated || ''}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="download-desc">Deskripsi *</label>
+          <textarea id="download-desc" required rows="3" placeholder="Deskripsi singkat dokumen">${escapeHtml(download?.desc || '')}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="download-file">URL File *</label>
+          <input type="url" id="download-file" required value="${escapeHtml(download?.file || '')}" placeholder="https://example.com/file.pdf">
+          <small style="color:var(--gray-500);margin-top:4px;display:block">Masukkan URL file yang dapat diunduh</small>
+        </div>
+
+        ${isEdit ? `<input type="hidden" id="download-idx" value="${download._idx}">` : ''}
+
+        <div class="modal__footer">
+          <button type="button" class="btn btn--secondary" onclick="AdminCMS.closeModal()">Batal</button>
+          <button type="submit" class="btn btn--primary">${isEdit ? 'Simpan Perubahan' : 'Tambah Dokumen'}</button>
+        </div>
+      </form>
+    `;
+  }
+
+  function showDownloadForm(download = null, idx = null) {
+    const title = download ? 'Edit Dokumen Download' : 'Tambah Dokumen Download Baru';
+    if (download && idx !== null) download._idx = idx;
+    openModal(title, getDownloadFormHtml(download));
+
+    $('#download-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      saveDownload(idx);
+    });
+  }
+
+  async function saveDownload(existingIdx = null) {
+    const title = $('#download-title').value.trim();
+    const category = $('#download-category').value;
+    const desc = $('#download-desc').value.trim();
+    const file = $('#download-file').value.trim();
+    const updated = $('#download-updated').value;
+
+    if (!title || !category || !desc || !file || !updated) {
+      showToast('Mohon lengkapi semua field yang wajib', 'error');
+      return;
+    }
+
+    const downloadData = { title, category, desc, file, updated };
+
+    try {
+      if (existingIdx !== null) {
+        const existingDownload = currentData.downloads[existingIdx];
+        currentData.downloads[existingIdx] = downloadData;
+        if (useFirebase && existingDownload.id) {
+          try {
+            await firebaseUpdateDownload(existingDownload.id, downloadData);
+          } catch (fbError) {
+            console.warn('Firebase update download failed, saved locally:', fbError);
+          }
+        }
+      } else {
+        if (useFirebase) {
+          try {
+            const id = await firebaseAddDownload(downloadData);
+            downloadData.id = id;
+          } catch (fbError) {
+            console.warn('Firebase add download failed, saved locally:', fbError);
+          }
+        }
+        currentData.downloads.unshift(downloadData);
+      }
+
+      saveData();
+      closeModal();
+      renderAll();
+      showToast(existingIdx !== null ? 'Dokumen berhasil diperbarui' : 'Dokumen berhasil ditambahkan', 'success');
+    } catch (error) {
+      console.error('Save download error:', error);
+      showToast('Gagal menyimpan: ' + error.message, 'error');
+    }
+  }
+
+  function editDownload(idx) {
+    const download = currentData.downloads[idx];
+    if (download) {
+      showDownloadForm(download, idx);
+    }
+  }
+
+  async function deleteDownload(idx) {
+    if (confirm('Yakin ingin menghapus dokumen ini?')) {
+      try {
+        const download = currentData.downloads[idx];
+        if (useFirebase && download.id) {
+          try {
+            await firebaseDeleteDownload(download.id);
+          } catch (fbError) {
+            console.warn('Firebase delete download failed, deleted locally:', fbError);
+          }
+        }
+        currentData.downloads.splice(idx, 1);
+        saveData();
+        renderAll();
+        showToast('Dokumen berhasil dihapus', 'success');
+      } catch (error) {
+        console.error('Delete download error:', error);
+        showToast('Gagal menghapus: ' + error.message, 'error');
+      }
+    }
+  }
+
+  // ============ CRUD: PPID ============
+  function getPPIDFormHtml(ppid = null) {
+    const isEdit = !!ppid;
+
+    return `
+      <form id="ppid-form">
+        <div class="form-group">
+          <label for="ppid-title">Judul *</label>
+          <input type="text" id="ppid-title" required value="${escapeHtml(ppid?.title || '')}" placeholder="Judul dokumen PPID">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ppid-number">Nomor *</label>
+            <input type="text" id="ppid-number" required value="${escapeHtml(ppid?.number || '')}" placeholder="01/2025">
+          </div>
+          <div class="form-group">
+            <label for="ppid-year">Tahun *</label>
+            <input type="number" id="ppid-year" required value="${ppid?.year || new Date().getFullYear()}" min="2000" max="2100">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ppid-type">Jenis *</label>
+            <select id="ppid-type" required>
+              <option value="">Pilih Jenis</option>
+              <option value="berkala" ${ppid?.type === 'berkala' ? 'selected' : ''}>Berkala</option>
+              <option value="setiap_saat" ${ppid?.type === 'setiap_saat' ? 'selected' : ''}>Setiap Saat</option>
+              <option value="serta_merta" ${ppid?.type === 'serta_merta' ? 'selected' : ''}>Serta Merta</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ppid-unit">Unit *</label>
+            <input type="text" id="ppid-unit" required value="${escapeHtml(ppid?.unit || '')}" placeholder="Nama unit">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="ppid-file">URL File *</label>
+          <input type="url" id="ppid-file" required value="${escapeHtml(ppid?.file || '')}" placeholder="https://example.com/file.pdf">
+          <small style="color:var(--gray-500);margin-top:4px;display:block">Masukkan URL file yang dapat diunduh</small>
+        </div>
+
+        <div class="form-group">
+          <label for="ppid-published">Tanggal Publikasi *</label>
+          <input type="date" id="ppid-published" required value="${ppid?.published || ''}">
+        </div>
+
+        ${isEdit ? `<input type="hidden" id="ppid-idx" value="${ppid._idx}">` : ''}
+
+        <div class="modal__footer">
+          <button type="button" class="btn btn--secondary" onclick="AdminCMS.closeModal()">Batal</button>
+          <button type="submit" class="btn btn--primary">${isEdit ? 'Simpan Perubahan' : 'Tambah Dokumen PPID'}</button>
+        </div>
+      </form>
+    `;
+  }
+
+  function showPPIDForm(ppid = null, idx = null) {
+    const title = ppid ? 'Edit Dokumen PPID' : 'Tambah Dokumen PPID Baru';
+    if (ppid && idx !== null) ppid._idx = idx;
+    openModal(title, getPPIDFormHtml(ppid));
+
+    $('#ppid-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      savePPID(idx);
+    });
+  }
+
+  async function savePPID(existingIdx = null) {
+    const title = $('#ppid-title').value.trim();
+    const number = $('#ppid-number').value.trim();
+    const year = parseInt($('#ppid-year').value) || new Date().getFullYear();
+    const type = $('#ppid-type').value;
+    const unit = $('#ppid-unit').value.trim();
+    const file = $('#ppid-file').value.trim();
+    const published = $('#ppid-published').value;
+
+    if (!title || !number || !type || !unit || !file || !published) {
+      showToast('Mohon lengkapi semua field yang wajib', 'error');
+      return;
+    }
+
+    const ppidData = { title, number, year, type, unit, file, published };
+
+    try {
+      if (existingIdx !== null) {
+        const existingPPID = currentData.ppid[existingIdx];
+        currentData.ppid[existingIdx] = ppidData;
+        if (useFirebase && existingPPID.id) {
+          try {
+            await firebaseUpdatePPID(existingPPID.id, ppidData);
+          } catch (fbError) {
+            console.warn('Firebase update PPID failed, saved locally:', fbError);
+          }
+        }
+      } else {
+        if (useFirebase) {
+          try {
+            const id = await firebaseAddPPID(ppidData);
+            ppidData.id = id;
+          } catch (fbError) {
+            console.warn('Firebase add PPID failed, saved locally:', fbError);
+          }
+        }
+        currentData.ppid.unshift(ppidData);
+      }
+
+      saveData();
+      closeModal();
+      renderAll();
+      showToast(existingIdx !== null ? 'Dokumen PPID berhasil diperbarui' : 'Dokumen PPID berhasil ditambahkan', 'success');
+    } catch (error) {
+      console.error('Save PPID error:', error);
+      showToast('Gagal menyimpan: ' + error.message, 'error');
+    }
+  }
+
+  function editPPID(idx) {
+    const ppid = currentData.ppid[idx];
+    if (ppid) {
+      showPPIDForm(ppid, idx);
+    }
+  }
+
+  async function deletePPID(idx) {
+    if (confirm('Yakin ingin menghapus dokumen PPID ini?')) {
+      try {
+        const ppid = currentData.ppid[idx];
+        if (useFirebase && ppid.id) {
+          try {
+            await firebaseDeletePPID(ppid.id);
+          } catch (fbError) {
+            console.warn('Firebase delete PPID failed, deleted locally:', fbError);
+          }
+        }
+        currentData.ppid.splice(idx, 1);
+        saveData();
+        renderAll();
+        showToast('Dokumen PPID berhasil dihapus', 'success');
+      } catch (error) {
+        console.error('Delete PPID error:', error);
+        showToast('Gagal menghapus: ' + error.message, 'error');
+      }
+    }
+  }
+
   // ============ Settings ============
   function handleSettingsForm(e) {
     e.preventDefault();
@@ -1615,11 +2118,33 @@
       showAlbumForm();
     });
 
+    // Add download button
+    $('#add-download-btn').addEventListener('click', function() {
+      showDownloadForm();
+    });
+
+    // Add PPID button
+    $('#add-ppid-btn').addEventListener('click', function() {
+      showPPIDForm();
+    });
+
     // Search posts
     $('#search-posts')?.addEventListener('input', renderPostsTable);
 
     // Filter category
     $('#filter-category')?.addEventListener('change', renderPostsTable);
+
+    // Search downloads
+    $('#search-downloads')?.addEventListener('input', renderDownloadsTable);
+
+    // Filter download category
+    $('#filter-download-category')?.addEventListener('change', renderDownloadsTable);
+
+    // Search PPID
+    $('#search-ppid')?.addEventListener('input', renderPPIDTable);
+
+    // Filter PPID type
+    $('#filter-ppid-type')?.addEventListener('change', renderPPIDTable);
 
     // Export data
     $('#export-data')?.addEventListener('click', exportData);
@@ -1670,6 +2195,10 @@
     deleteEvent,
     editAlbum,
     deleteAlbum,
+    editDownload,
+    deleteDownload,
+    editPPID,
+    deletePPID,
     closeModal
   };
 

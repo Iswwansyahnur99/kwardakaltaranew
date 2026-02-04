@@ -66,6 +66,12 @@
         <a href="#" class="nav-item" data-section="albums">
           <span class="nav-icon">🖼️</span> Galeri
         </a>
+        <a href="#" class="nav-item" data-section="downloads">
+          <span class="nav-icon">📥</span> Download
+        </a>
+        <a href="#" class="nav-item" data-section="ppid">
+          <span class="nav-icon">📄</span> PPID
+        </a>
         <a href="#" class="nav-item" data-section="settings">
           <span class="nav-icon">⚙️</span> Pengaturan
         </a>
@@ -210,6 +216,77 @@
           </div>
 
           <div class="albums-grid" id="albums-grid"></div>
+        </section>
+
+        <!-- Downloads Section -->
+        <section id="section-downloads" class="section">
+          <div class="section-header">
+            <h2>Kelola Download</h2>
+            <button id="add-download-btn" class="btn btn--primary">+ Tambah Dokumen</button>
+          </div>
+
+          <div class="filters-row">
+            <input type="text" id="search-downloads" placeholder="Cari dokumen..." class="input-search">
+            <select id="filter-download-category" class="input-select">
+              <option value="">Semua Kategori</option>
+              <option value="Pendaftaran">Pendaftaran</option>
+              <option value="SOP">SOP</option>
+              <option value="Pedoman">Pedoman</option>
+              <option value="Template">Template</option>
+              <option value="Surat">Surat</option>
+            </select>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Judul</th>
+                  <th>Kategori</th>
+                  <th>Deskripsi</th>
+                  <th>File</th>
+                  <th>Update</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="downloads-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- PPID Section -->
+        <section id="section-ppid" class="section">
+          <div class="section-header">
+            <h2>Kelola PPID</h2>
+            <button id="add-ppid-btn" class="btn btn--primary">+ Tambah Dokumen PPID</button>
+          </div>
+
+          <div class="filters-row">
+            <input type="text" id="search-ppid" placeholder="Cari dokumen PPID..." class="input-search">
+            <select id="filter-ppid-type" class="input-select">
+              <option value="">Semua Jenis</option>
+              <option value="berkala">Berkala</option>
+              <option value="setiap_saat">Setiap Saat</option>
+              <option value="serta_merta">Serta Merta</option>
+            </select>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Judul</th>
+                  <th>Nomor</th>
+                  <th>Tahun</th>
+                  <th>Jenis</th>
+                  <th>Unit</th>
+                  <th>Publikasi</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="ppid-table"></tbody>
+            </table>
+          </div>
         </section>
 
         <!-- Settings Section -->
