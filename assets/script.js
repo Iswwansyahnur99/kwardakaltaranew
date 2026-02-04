@@ -346,7 +346,7 @@
 
     if (page === 'beranda' || page === 'home') {
       // Render limited lists on home
-      renderPosts(document.getElementById('posts'));
+      renderPosts(document.getElementById('posts'), null, null);
       renderEvents(document.getElementById('events-upcoming'));
       renderEvents(document.getElementById('events-past'));
     }
