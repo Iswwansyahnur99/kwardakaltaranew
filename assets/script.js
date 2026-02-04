@@ -143,12 +143,29 @@
     const stored = localStorage.getItem('cms_data');
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Ensure all required arrays exist
+        if (parsed && typeof parsed === 'object') {
+          if (!parsed.posts) parsed.posts = [];
+          if (!parsed.events) parsed.events = [];
+          if (!parsed.albums) parsed.albums = [];
+          if (!parsed.downloads) parsed.downloads = [];
+          if (!parsed.ppid) parsed.ppid = [];
+          return parsed;
+        }
       } catch (e) {
         console.error('Failed to parse CMS data:', e);
       }
     }
-    return window.APP_DATA || {};
+    // Fallback to APP_DATA or create empty structure
+    const defaultData = window.APP_DATA || {};
+    return {
+      posts: defaultData.posts || [],
+      events: defaultData.events || [],
+      albums: defaultData.albums || [],
+      downloads: defaultData.downloads || [],
+      ppid: defaultData.ppid || []
+    };
   }
   const DATA = loadCMSData();
 
@@ -157,10 +174,14 @@
     const q = (searchEl?.value || '').toLowerCase();
     const tag = (tagSel?.value || '');
     listEl.innerHTML='';
+    if (!DATA.posts || !Array.isArray(DATA.posts)) {
+      listEl.innerHTML = '<p style="color:var(--gray)">Belum ada berita.</p>';
+      return;
+    }
     let coll = DATA.posts
       .slice()
       .sort((a,b)=> new Date(b.date) - new Date(a.date))
-      .filter(p => (!q || (p.title+" "+p.excerpt+" "+p.location).toLowerCase().includes(q)) && (!tag || p.tags.includes(tag)));
+      .filter(p => (!q || (p.title+" "+p.excerpt+" "+p.location).toLowerCase().includes(q)) && (!tag || (p.tags && Array.isArray(p.tags) && p.tags.includes(tag))));
     const limit = Number(listEl?.dataset?.limit || 0);
     if (limit > 0) coll = coll.slice(0, limit);
     coll
@@ -176,7 +197,7 @@
             <h3 class="card__title">${p.title}</h3>
             <div class="meta">${p.location} • ${new Date(p.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</div>
             <p>${p.excerpt}</p>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${(p.tags && Array.isArray(p.tags) ? p.tags.map(t=>`<span class="tag">${t}</span>`).join('') : '')}</div>
             <div style="margin-top:10px"><a class="btn" href="berita-detail.html?slug=${encodeURIComponent(p.slug)}">Baca berita</a></div>
           </div>`;
         listEl.appendChild(el);
@@ -189,6 +210,10 @@
   function renderAlbums(listEl){
     if (!listEl) return;
     listEl.innerHTML='';
+    if (!DATA.albums || !Array.isArray(DATA.albums)) {
+      listEl.innerHTML = '<p style="color:var(--gray)">Belum ada album.</p>';
+      return;
+    }
     let coll = DATA.albums.slice();
     const limit = Number(listEl?.dataset?.limit || 0);
     if (limit > 0) coll = coll.slice(0, limit);
@@ -210,6 +235,10 @@
   function renderEvents(listEl){
     if (!listEl) return;
     listEl.innerHTML='';
+    if (!DATA.events || !Array.isArray(DATA.events)) {
+      listEl.innerHTML = '<p style="color:var(--gray)">Belum ada agenda.</p>';
+      return;
+    }
     const now = new Date();
     const type = (listEl?.dataset?.type || 'all');
     let coll = DATA.events.slice();
@@ -244,6 +273,12 @@
     const q = (searchEl?.value || '').toLowerCase();
     const cat = (catSel?.value || '');
     tbody.innerHTML='';
+    if (!DATA.downloads || !Array.isArray(DATA.downloads)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="5" style="color:var(--gray)">Belum ada dokumen.</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
     DATA.downloads
       .filter(d => (!q || (d.title+" "+d.desc+" "+d.category).toLowerCase().includes(q)) && (!cat || d.category===cat))
       .forEach(d=>{
@@ -266,6 +301,12 @@
   function renderPPID(tbody, searchEl, typeSel, yearSel){
     if (!tbody) return;
     tbody.innerHTML='';
+    if (!DATA.ppid || !Array.isArray(DATA.ppid)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="7" style="color:var(--gray)">Belum ada dokumen PPID.</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
     const q=(searchEl?.value||'').toLowerCase();
     const type=(typeSel?.value||'');
     const year=(yearSel?.value||'');
@@ -330,6 +371,11 @@
         const params = new URLSearchParams(location.search);
         slug = params.get('slug');
       }
+      if (!DATA.posts || !Array.isArray(DATA.posts)) {
+        const wrap = document.getElementById('post-detail');
+        if (wrap) wrap.innerHTML = '<p>Berita tidak ditemukan.</p>';
+        return;
+      }
       const post = DATA.posts.find(p=>p.slug===slug);
       const wrap = document.getElementById('post-detail');
       const crumb = document.getElementById('crumb-title');
@@ -345,13 +391,16 @@
       const bodyHtml = Array.isArray(post.content)
         ? post.content.map(p=>`<p>${p}</p>`).join('')
         : (post.content ? post.content.split(/\n\n+/).map(p=>`<p>${p}</p>`).join('') : `<p>${post.excerpt}</p>`);
+      const tagsHtml = (post.tags && Array.isArray(post.tags)) 
+        ? post.tags.map(t=>`<span class="chip">${t}</span>`).join('')
+        : '';
       if (wrap) wrap.innerHTML = `
         <header>
           <div class="meta">${post.location} • ${new Date(post.date).toLocaleDateString('id-ID')}</div>
           <h2 style="margin:6px 0 12px">${post.title}</h2>
         </header>
         ${bodyHtml}
-        <div class="chips" style="margin-top:12px">${post.tags.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+        ${tagsHtml ? `<div class="chips" style="margin-top:12px">${tagsHtml}</div>` : ''}
       `;
     }
 
